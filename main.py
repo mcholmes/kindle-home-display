@@ -45,8 +45,9 @@ if __name__ == '__main__':
     logger.info("Starting dashboard update")
 
     # Retrieve Weather Data
-    owmModule = OWMModule()
-    current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
+    # owmModule = OWMModule()
+    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
+    current_weather, hourly_forecast, daily_forecast = None, None, None
 
     # Retrieve Calendar Data
     currDate = dt.now(displayTZ).date()
@@ -57,8 +58,9 @@ if __name__ == '__main__':
         currDate, calendars, calStartDatetime, calEndDatetime, displayTZ, numCalDaysToShow)
 
     # Retrieve Random Fact from OpenAI
-    oaiModule = OAIModule()
-    topic = oaiModule.get_random_fact(currDate, openai_api_key)
+    # oaiModule = OAIModule()
+    # topic = oaiModule.get_random_fact(currDate, openai_api_key)
+    topic = {"title": "OpenAI", "text": "Fifty random words"}
 
     # Render Dashboard Image
     renderService = RenderHelper(imageWidth, imageHeight, rotateAngle)

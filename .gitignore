@@ -131,3 +131,4 @@ dmypy.json
 # Google calendar credentials
 credentials.json
 token.pickle
+api_keys.json

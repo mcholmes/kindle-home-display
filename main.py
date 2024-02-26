@@ -25,6 +25,9 @@ if __name__ == '__main__':
     configFile = open('config.json')
     config = json.load(configFile)
 
+    apiFile = open('api_keys.json')
+    api = json.load(apiFile)
+
     calendars = config['calendars'] # Google Calendar IDs
     displayTZ = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
     numCalDaysToShow = config['numCalDaysToShow'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
@@ -33,8 +36,8 @@ if __name__ == '__main__':
     rotateAngle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
     lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
     lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-    owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-    openai_api_key = config["openai_api_key"]  # OpenAI API key. Required to retrieve response from ChatGPT
+    owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
+    openai_api_key = api["openai_api_key"]  # OpenAI API key. Required to retrieve response from ChatGPT
     path_to_server_image = config["path_to_server_image"]  # Location to save the generated image
 
     # Create and configure logger
@@ -45,9 +48,9 @@ if __name__ == '__main__':
     logger.info("Starting dashboard update")
 
     # Retrieve Weather Data
-    # owmModule = OWMModule()
-    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
-    current_weather, hourly_forecast, daily_forecast = None, None, None
+    owmModule = OWMModule()
+    current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
+    # current_weather, hourly_forecast, daily_forecast = None, None, None
 
     # Retrieve Calendar Data
     currDate = dt.now(displayTZ).date()

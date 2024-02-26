@@ -15,8 +15,7 @@ class OWMModule:
         self.logger = logging.getLogger('maginkdash')
 
     def get_owm_weather(self, lat, lon, api_key):
-        url = "https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&appid=%s&exclude=minutely,alerts&units=metric" % (
-        lat, lon, api_key)
+        url = "https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&appid=%s&exclude=minutely,alerts&units=metric" % (lat, lon, api_key)
         response = requests.get(url)
         data = json.loads(response.text)
         curr_weather = data["current"]

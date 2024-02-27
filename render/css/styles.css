@@ -27,7 +27,7 @@ h1, h2, p, span, .h1, .h2, .p, .span  {
 
 .big-day {
     font-family: "TiltWarp-Regular", sans-serif;
-    font-size: 18rem;
+    font-size: 15rem;
 }
 
 .event {
@@ -60,4 +60,11 @@ h1, h2, p, span, .h1, .h2, .p, .span  {
   padding-left:10;
   padding-top:0;
   padding-bottom:0;
+}
+
+.v-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* height: 100vh; /* Ensure the container takes up the full viewport height */
 }

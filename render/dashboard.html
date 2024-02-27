@@ -9,28 +9,73 @@
         <link rel="stylesheet" href="bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="css/styles.css">
         <link rel="stylesheet" href="css/weather-icons.min.css">
-        
+
     </head>
     
     <body style="background: url('background.jpg') no-repeat center center fixed; background-size: cover;">
         <div class="container">
 
-            <div class="row justify-content-center">
+            <!-- Date & Weather -->
+            <div class="row justify-content-center v-center">
                 
                 <!-- Today's Date -->
                 <div class="col text-left">
-                    <p class="big-day" style="margin-bottom:-50px; text-align:left; padding-left:0; margin-left:-8px">26</p>
-                    <p style="font-size: 2.5rem; margin : 0; padding-top:0;">Monday<br />February</p>
+                    <p class="big-day" style="margin-bottom:-50px; text-align:left;">27</p>
+                </div>
+
+                <div class="col text-left">
+                    <p style="font-size: 2.5rem; margin : 0; padding-top:0; font-size: 2rem;">
+                        Tuesday
+                        <br />
+                        February
+                    </p>
                 </div>
                 
                 <!-- Today's weather -->
                 <div class="col text-center">    
-                    <i class="wi wi-owm-1" style="font-size: 25rem"></i>
+                    <i class="wi wi-owm-802" style="font-size: 10rem"></i>
+                    <p style="font-size: 2.5rem;">Scattered Clouds | 7°</p>
+            </div>
+
+            <!-- Break -->
+            <div class="row align-items-start ">
+                <div class="col-6"  style="height: 10px"></div>
+            </div>
+            
+            
+            <div class="row align-items-start ">
+                
+                <!-- Calendar -->
+                <div class="col-6">
+
+                    <h2>Today</h2>
+                    <ol class="list-unstyled">
+                        <div class="event"><span class="event-time">None</span></div>
+                    </ol>
+
+                    <h2>Tomorrow</h2>
+                    <ol class="list-unstyled">
+                        <div class="event"><span class="event-time">None</span></div>
+                    </ol>
+
+                    <h2>Day after</h2>
+                    <ol class="list-unstyled">
+                        <div class="event"><span class="event-time">None</span></div>
+                    </ol>
                 </div>
 
-                <div class="col text-right">
-                    <h2>Current weather | 2°</h2>
+                <!-- Todoist -->
+                <div class="col-6">
+                    <h2>Tasks</h2>
+                    <ol class="list-unstyled">
+                        <div class="event"><span class="event-time">Thing 1</span></div>
+                        <div class="event"><span class="event-time">Thing 2</span></div>
+                        <div class="event"><span class="event-time">Thing 3</span></div>
+                        <div class="event"><span class="event-time">Thing 4</span></div>
+                        <div class="event"><span class="event-time">Thing 5</span></div>
+                    </ol>
                 </div>
+
             </div>
 
         </div>

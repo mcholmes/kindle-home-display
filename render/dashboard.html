@@ -4,137 +4,35 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="css/bootstrap.min.css">
+        
+        <script src="bootstrap/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="bootstrap/bootstrap.min.css">
         <link rel="stylesheet" href="css/styles.css">
         <link rel="stylesheet" href="css/weather-icons.min.css">
+        
     </head>
+    
     <body style="background: url('background.jpg') no-repeat center center fixed; background-size: cover;">
         <div class="container">
-            <!-- Calendar -->
+
             <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="row">
-                                <div class="col-md-6 date-padding">
-                                    <div class="text-right">
-                                        <p class="big-day">26</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 date-padding">
-                                    <div class="col-md-12"  style="height: 130px"></div>
-                                    <div>
-                                        <p style="font-size: 2.5rem">Monday<br />February</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12 text-center">
-                            <i class="wi wi-owm-802" style="font-size: 25rem"></i>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 30px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12 text-center">
-                            <h2>Scattered Clouds | 5°</h2>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 20px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-4">
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <i class="wi wi-owm-500" style="font-size: 10rem; color:gray"></i>
-                                </div>
-                            </div>
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <h3>Today<br />100% | 5-8°</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <i class="wi wi-owm-804" style="font-size: 10rem; color:gray"></i>
-                                </div>
-                            </div>
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <h3>Tuesday<br />0% | 2-8°</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <i class="wi wi-owm-501" style="font-size: 10rem; color:gray"></i>
-                                </div>
-                            </div>
-                            <div class="row align-items-start ">
-                                <div class="col-md-12 text-center">
-                                    <h3>Wednesday<br />100% | 7-10°</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 50px"></div>
-                    </div>
+                
+                <!-- Today's Date -->
+                <div class="col text-left">
+                    <p class="big-day" style="margin-bottom:-50px; text-align:left; padding-left:0; margin-left:-8px">26</p>
+                    <p style="font-size: 2.5rem; margin : 0; padding-top:0;">Monday<br />February</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 50px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12">
-                            <h2>Today</h2>
-                            <ol class="list-unstyled">
-                                <div class="event">Test - MH</div>
+                
+                <!-- Today's weather -->
+                <div class="col text-center">    
+                    <i class="wi wi-owm-1" style="font-size: 25rem"></i>
+                </div>
 
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 10px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12">
-                            <h2>Tuesday</h2>
-                            <ol class="list-unstyled">
-                                <div class="event">Test - HB</div>
-
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 10px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12">
-                            <h2>Wednesday</h2>
-                            <ol class="list-unstyled">
-                                <div class="event"><span class="event-time">None</span></div>
-                            </ol>
-                        </div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12"  style="height: 10px"></div>
-                    </div>
-                    <div class="row align-items-start ">
-                        <div class="col-md-12">
-                            <h2>OpenAI</h2>
-                            <div class="did-you-know">Fifty random words</div>
-                        </div>
-                    </div>
+                <div class="col text-right">
+                    <h2>Current weather | 2°</h2>
                 </div>
             </div>
+
         </div>
     </body>
 </html>

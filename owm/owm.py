@@ -24,12 +24,25 @@ class OWMModule:
         daily_forecast = data["daily"]
         # print(json.dumps(forecast, indent=2))
         results = {"current_weather": curr_weather, "hourly_forecast": hourly_forecast, "daily_forecast": daily_forecast}
+
+        # TODO: delete this
+        cache = json.dumps(results)
+        weather_file = open("weather.json", "w")
+        weather_file.write(cache)
+        
         return results
 
     def get_weather(self, lat, lon, owm_api_key):
         current_weather, daily_forecast = {}, {}
 
-        weather_results = self.get_owm_weather(lat, lon, owm_api_key)
+        # TODO: delete this
+        try:
+            weather_file = open('weather.json')
+            weather_results = json.load(weather_file)
+            print("Using cached weather results")
+        except FileNotFoundError:
+            weather_results = self.get_owm_weather(lat, lon, owm_api_key)
+        
         current_weather = weather_results["current_weather"]
         hourly_forecast = weather_results["hourly_forecast"]
         daily_forecast = weather_results["daily_forecast"]

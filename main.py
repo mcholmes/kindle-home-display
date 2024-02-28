@@ -50,7 +50,6 @@ if __name__ == '__main__':
     # Retrieve Weather Data
     owmModule = OWMModule()
     current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
-    # current_weather, hourly_forecast, daily_forecast = None, None, None
 
     # Retrieve Calendar Data
     currDate = dt.now(displayTZ).date()

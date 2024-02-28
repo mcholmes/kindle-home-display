@@ -107,7 +107,7 @@ class RenderHelper:
             day=current_date.strftime("%-d"),
             month=current_date.strftime("%B"),
             weekday=current_date.strftime("%A"),
-            tomorrow=(current_date + timedelta(days=1)).strftime("%A"),
+            # tomorrow=(current_date + timedelta(days=1)).strftime("%A"),
             dayafter=(current_date + timedelta(days=2)).strftime("%A"),
             events_today=cal_events_list[0],
             events_tomorrow=cal_events_list[1],

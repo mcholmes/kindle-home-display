@@ -9,12 +9,23 @@
 }
 
 @font-face {
+    font-family: "Lexend-Light";
+    src: url('../font/Lexend-Bold.ttf');
+}
+
+@font-face {
     font-family: "TiltWarp-Regular";
     src: url('../font/TiltWarp-Regular.ttf');
 }
 
+
 h1, h2, p, span, .h1, .h2, .p, .span  {
     font-family: "Lexend-Regular", sans-serif;
+}
+
+h2 {
+    font-size: 3rem;
+    text-align: center;
 }
 
 .list-unstyled {
@@ -28,6 +39,7 @@ h1, h2, p, span, .h1, .h2, .p, .span  {
 .big-day {
     font-family: "TiltWarp-Regular", sans-serif;
     font-size: 15rem;
+    text-align: left;
 }
 
 .event {
@@ -40,12 +52,6 @@ h1, h2, p, span, .h1, .h2, .p, .span  {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.did-you-know {
-    font-family: "Lexend-Light", sans-serif;
-    font-size: 2.5rem;
-    max-width: 95%;
 }
 
 .date-padding {

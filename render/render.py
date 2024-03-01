@@ -16,7 +16,7 @@ import string
 from PIL import Image
 import logging
 from selenium.webdriver.common.by import By
-
+import io
 
 class RenderHelper:
 
@@ -55,8 +55,13 @@ class RenderHelper:
         self.set_viewport_size(driver)
         driver.get(self.htmlFile)
         sleep(1)
-        driver.get_screenshot_as_file(self.currPath + '/dashboard.png')
-        driver.get_screenshot_as_file(path_to_server_image)
+        
+        screenshot = driver.get_screenshot_as_png()
+        img = Image.open(io.BytesIO(screenshot))
+        img = img.convert('L') # convert to grayscale and remove alpha; needed for Kindle's eips to render properly
+        img.save(self.currPath + '/dashboard.png')
+        img.save(path_to_server_image)
+
         self.logger.info('Screenshot captured and saved to file.')
 
     def get_short_time(self, datetimeObj, is24hour=False):

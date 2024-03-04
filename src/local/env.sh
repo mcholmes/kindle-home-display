@@ -2,8 +2,12 @@
 
 # Export environment variables here
 export WIFI_TEST_IP=${WIFI_TEST_IP:-1.1.1.1}
-export REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"2,32 8-17 * * MON-FRI"}
-export TIMEZONE=${TIMEZONE:-"Europe/Amsterdam"}
+
+# export REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"/2 * * * *"}
+# next-wakeup can't calculate next time from / syntax 
+
+export REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58 * * * *"}
+export TIMEZONE=${TIMEZONE:-"Europe/London"}
 
 # By default, partial screen updates are used to update the screen,
 # to prevent the screen from flashing. After a few partial updates,

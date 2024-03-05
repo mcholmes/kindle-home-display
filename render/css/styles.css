@@ -9,8 +9,13 @@
 }
 
 @font-face {
-    font-family: "Lexend-Light";
+    font-family: "Lexend-Bold";
     src: url('../font/Lexend-Bold.ttf');
+}
+
+@font-face {
+    font-family: "Lexend-ExtraLight";
+    src: url('../font/Lexend-ExtraLight.ttf');
 }
 
 @font-face {
@@ -26,6 +31,11 @@ h1, h2, p, span, .h1, .h2, .p, .span  {
 h2 {
     font-size: 3rem;
     text-align: center;
+}
+
+.day-heading {
+    font-family: "Lexend-Light", sans-serif;
+    color: gray;
 }
 
 .list-unstyled {

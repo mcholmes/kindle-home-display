@@ -85,6 +85,7 @@ class Calendar:
         )
         return eventList
         # TODO: consider timezone
+        # TODO: (day n/N) for multi-day events?
     
     # Function to extract date from datetime object
     @staticmethod
@@ -128,7 +129,6 @@ class Calendar:
         # Now we have all keys, so convert defaultdict to regular dictionary
         grouped_events = dict(grouped_events)
 
-        return grouped_events
+
         
-        # - handle multi-day events
-        # - convert what's needed by renderer
+        return grouped_events

@@ -1,12 +1,15 @@
 {
   "displayTZ": "Europe/London",
-  "calendars": ["primary", "10a2dd68e51bb17689c7ccf4f4722d1f445c59c86430577b425c33ccee27be2e@group.calendar.google.com", "r45mcf74fb3fmv84v108q3hsgjvi46ds@import.calendar.google.com"],
-  "numCalDaysToShow": 5,
+  "calendars": [
+    "10a2dd68e51bb17689c7ccf4f4722d1f445c59c86430577b425c33ccee27be2e@group.calendar.google.com", 
+    "r45mcf74fb3fmv84v108q3hsgjvi46ds@import.calendar.google.com"
+  ],
+  "numCalDaysToShow": 2,
   "lat": 51.424340,
   "lon": -0.142855,
   "kindle_dims": 1448.1072,
   "imageWidth": 1072,
   "imageHeight": 1448,
   "rotateAngle": 0,
-  "path_to_server_image": "~/projects/home-display/maginkdash.png"
+  "path_to_server_image": "/Users/mike.holmes/projects/home-display/dashboard.png"
 }

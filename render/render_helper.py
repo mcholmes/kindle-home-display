@@ -1,8 +1,7 @@
 from PIL import Image, ImageDraw
-from font_helper import FontFactory
-import os
-import pathlib
+from render.font_helper import FontFactory
 import logging
+from os import path
 
 """
 TODO:
@@ -14,13 +13,14 @@ class Renderer:
     def __init__(self, ff: FontFactory,
                  image_width: int, image_height: int, margin_x: int, margin_y: int,
                  top_row_y: int, spacing_between_sections: int,
-                 bg_colour = "white",
+                 output_filepath: str
                  ):
             
             self.logger = logging.getLogger('maginkdash')
             
-            self.image = Image.new("RGB", (image_width, image_height), bg_colour)
+            self.image = Image.new("RGB", (image_width, image_height), "white")
             self.draw = ImageDraw.Draw(self.image)
+            self.output_filepath = output_filepath # needs to be full path, .png extension
             self.ff = ff
 
             self.image_height = image_height
@@ -29,8 +29,29 @@ class Renderer:
             self.margin_y = margin_y
             self.top_row_y = top_row_y
             self.spacing_between_sections = spacing_between_sections
+
+            self.bullet_format = "•"
     
-    def render_events(self, section_title, bullet_points, y):
+    def render_event_text_only(self, position: tuple[int], event_text : str, font):
+        self.draw.text(position, f"{self.bullet_format} {event_text}", font=font, fill="black")
+
+    def render_event_with_time(self, position: tuple[int], event_time : str, event_text : str, font):
+        x,y = position
+
+        bullet = self.bullet_format + " "        
+        event_time = event_time + " "
+
+        width_time = font.getbbox(event_time)[2]
+        width_bp = font.getbbox(bullet)[2]
+
+        x_time = x + width_bp 
+        x_text = x_time + width_time
+
+        self.draw.text((x, y), bullet, font=font, fill="black")
+        self.draw.text((x_time, y), event_time, font=font, fill="gray")
+        self.draw.text((x_text, y), event_text, font=font, fill="black")
+    
+    def render_events(self, section_title: str, events: list[dict], y):
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
         event_title = self.ff.get("light")
@@ -59,28 +80,20 @@ class Renderer:
         # Bullets
         f = event_reg.font()
         bullet_height = event_reg.height()
-        for index, bullet in enumerate(bullet_points):
+        for index, event in enumerate(events):
+            
+            # Stop rendering events if we're past the bottom margin
             if y > self.image_height - self.margin_y:
-                self.draw.text((self.margin_x, y), f"     + {len(bullet_points)-index} more...", font=f, fill="black")
+                remaining = len(events) - index
+                self.draw.text((self.margin_x, y), f"     + {remaining} more...", font=f, fill="black")
                 break
             
-            if type(bullet) == str:
-                self.draw.text((self.margin_x, y), "• " + bullet, font=f, fill="black")
-            elif type(bullet) == tuple:
-                event_time = bullet[0] + " "
-                event_text = bullet[1]
-
-                width_time = event_reg.width(event_time)
-                width_text = event_reg.width(event_text)
-                width_bp = event_reg.width("• ") # bp = bulletpoint symbol
-
-                x_bp = self.margin_x
-                x_time = x_bp + width_bp 
-                x_text = x_time + width_time
-
-                self.draw.text((x_bp, y), "• ", font=f, fill="black")
-                self.draw.text((x_time, y), event_time, font=f, fill="gray")
-                self.draw.text((x_text, y), event_text, font=f, fill="black")
+            text = event["summary"]
+            time = event.get("short_time", None)
+            if time is None:
+                self.render_event_text_only(position=(self.margin_x, y), event_text=text, font=f)
+            else:
+                self.render_event_with_time(position=(self.margin_x, y), event_time=time, event_text=text, font=f)
                     
             y += bullet_height + 5  # Add spacing between bullet points
 
@@ -123,26 +136,9 @@ class Renderer:
         self.render_events("Tomorrow", events_tomorrow, y)
 
         # Save the image
-        self.image.save("output.png")
-
-
-font_map = {
-        "light": "Lexend-Light.ttf", 
-        "regular": "Lexend-Regular.ttf", 
-        "bold": "Lexend-Bold.ttf",
-        "extrabold": "Lexend-ExtraBold.ttf",
-        "weather": "weathericons-regular-webfont.ttf"
-}
-
-f = FontFactory("/Users/mike.holmes/projects/home-display/render/font",font_map)
-r = Renderer(ff=f, image_width=1072, image_height=1448, margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50)
-
-e_today = ["Event 1", "Event 2", "Event 3", "Event 4", "Event 5"]
-e_tomorrow = ["Event 6", "Event 7", ("3.30pm", "Event 8"), "Event 9", "Event 10", "Event 11", "Event 8", "Event 9", "Event 10", "Event 11"]
-
-from datetime import datetime as dt
-
-r.render_all(
-    todays_date=dt.now().date(), 
-    weather=None,
-    events_today=e_today, events_tomorrow=e_tomorrow)
+        fn = self.output_filepath
+        if not path.exists(fn):
+            f = open(fn, "x")
+            f.close()
+        else:
+            self.image.save(fn)

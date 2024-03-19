@@ -3,27 +3,33 @@
 """
 This is where we retrieve events from the Google Calendar. Before doing so, make sure you have both the
 credentials.json and token.pickle in the same folder as this file. If not, run quickstart.py first.
+
 """
 
 from __future__ import print_function
-import datetime as dt
-import pickle
+from datetime import datetime
 import os.path
 import pathlib
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import logging
+import pickle
 
 
 class GcalHelper:
 
     def __init__(self):
         self.logger = logging.getLogger('maginkdash')
+        
+        self.currPath = str(pathlib.Path(__file__).parent.absolute())
+        
+        self.api = None
+        self.authorise()
+
+    def authorise(self):
         # Initialise the Google Calendar using the provided credentials and token
         SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-        self.currPath = str(pathlib.Path(__file__).parent.absolute())
-
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
@@ -43,13 +49,13 @@ class GcalHelper:
             with open(self.currPath + '/token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
 
-        self.service = build('calendar', 'v3', credentials=creds, cache_discovery=False)
+        self.api = build('calendar', 'v3', credentials=creds, cache_discovery=False)
 
     def list_calendars(self):
         # helps to retrieve ID for calendars within the account
         # calendar IDs added to config.json will then be queried for retrieval of events
         self.logger.info('Getting list of calendars')
-        calendars_result = self.service.calendarList().list().execute()
+        calendars_result = self.api.calendarList().list().execute()
         calendars = calendars_result.get('items', [])
         if not calendars:
             self.logger.info('No calendars found.')
@@ -58,46 +64,52 @@ class GcalHelper:
             cal_id = calendar['id']
             self.logger.info("%s\t%s" % (summary, cal_id))
 
-    def to_datetime(self, isoDatetime, localTZ):
+        return calendars
+
+    @staticmethod
+    def to_datetime(isoDatetime, localTZ):
         # replace Z with +00:00 is a workaround until datetime library decides what to do with the Z notation
-        to_datetime = dt.datetime.fromisoformat(isoDatetime.replace('Z', '+00:00'))
+        to_datetime = datetime.fromisoformat(isoDatetime.replace('Z', '+00:00'))
         return to_datetime.astimezone(localTZ)
 
-    def adjust_end_time(self, endTime, localTZ):
+    @staticmethod
+    def adjust_end_time(endTime, localTZ):
         # check if end time is at 00:00 of next day, if so set to max time for day before
         if endTime.hour == 0 and endTime.minute == 0 and endTime.second == 0:
             newEndtime = localTZ.localize(
-                dt.datetime.combine(endTime.date() - dt.timedelta(days=1), dt.datetime.max.time()))
+                datetime.combine(endTime.date() - datetime(days=1), datetime.max.time()))
             return newEndtime
         else:
             return endTime
 
-    def is_multiday(self, start, end):
+    @staticmethod
+    def is_multiday(start: datetime, end: datetime):
         # check if event stretches across multiple days
         return start.date() != end.date()
+    
+    def get_events_response():
+        
 
-    def retrieve_events(self, calendars, startDatetime, endDatetime, localTZ):
+    def retrieve_events(self, calendars : list[str], startDatetime: datetime, endDatetime: datetime, localTZ):
         # Call the Google Calendar API and return a list of events that fall within the specified dates
         event_list = []
 
         min_time_str = startDatetime.isoformat()
         max_time_str = endDatetime.isoformat()
-        if False:
-            return event_list
 
         self.logger.info('Retrieving events between ' + min_time_str + ' and ' + max_time_str + '...')
         events_result = []
         for cal in calendars:
-            events_result.append(
-                self.service.events().list(calendarId=cal, timeMin=min_time_str,
+            response = self.api.events().list(calendarId=cal, timeMin=min_time_str,
                                            timeMax=max_time_str, singleEvents=True,
                                            orderBy='startTime').execute()
-            )
+            
+
+            events_result.append(response)
 
         events = []
         for eve in events_result:
             events += eve.get('items', [])
-            # events = events_result.get('items', [])
 
         if not events:
             self.logger.info('No upcoming events found.')
@@ -124,6 +136,5 @@ class GcalHelper:
             event_list.append(new_event)
 
         # We need to sort eventList because the event will be sorted in "calendar order" instead of hours order
-        # TODO: improve because of double cycle for now is not much cost
         event_list = sorted(event_list, key=lambda k: k['startDatetime'])
         return event_list

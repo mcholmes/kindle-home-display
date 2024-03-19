@@ -1,70 +1,82 @@
-"""
-This project is designed for the Inkplate 10 display. However, since the server code is only generating an image, it can
-be easily adapted to other display sizes and resolution by adjusting the config settings, HTML template and
-CSS stylesheet. This code is heavily adapted from my other project (MagInkCal) so do take a look at it if you're keen.
-As a dashboard, there are many other things that could be displayed, and it can be done as long as you are able to
-retrieve the information. So feel free to change up the code and amend it to your needs.
-"""
-
-import datetime
 import logging
 import sys
 import json
-from datetime import datetime as dt
+from datetime import time
 from pytz import timezone
-from gcal.gcal import GcalModule
+from cal.cal import Calendar
 from owm.owm import OWMModule
-from oai.oai import OAIModule
-from render.render import RenderHelper
+from render.font_helper import FontFactory
+from render.render_helper import Renderer
 
+logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
-    logger = logging.getLogger('maginkdash')
+    # Create and configure logger
+    logging.basicConfig(filename="logfile.log", format='%(asctime)s %(levelname)s - %(message)s', filemode='a')
+    logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
+    logger.setLevel(logging.INFO)
 
     # Basic configuration settings (user replaceable)
-    configFile = open('config.json')
-    config = json.load(configFile)
+    logger.info("Getting config data")
+    with open('config.json') as configFile:
+        config = json.load(configFile)
 
-    calendars = config['calendars'] # Google Calendar IDs
-    displayTZ = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
-    numCalDaysToShow = config['numCalDaysToShow'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
+    with open('api_keys.json') as apiFile:
+        api = json.load(apiFile)
+
+    calendar_ids = config['calendars'] # Google Calendar IDs
+    display_timezone = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
+    calendar_days_to_show = config['numCalDaysToShow'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
+    
     imageWidth = config['imageWidth']  # Width of image to be generated for display.
     imageHeight = config['imageHeight']  # Height of image to be generated for display.
     rotateAngle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
-    lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
-    lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-    owm_api_key = config["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-    openai_api_key = config["openai_api_key"]  # OpenAI API key. Required to retrieve response from ChatGPT
-    path_to_server_image = config["path_to_server_image"]  # Location to save the generated image
-
-    # Create and configure logger
-    logging.basicConfig(filename="logfile.log", format='%(asctime)s %(levelname)s - %(message)s', filemode='a')
-    logger = logging.getLogger('maginkdash')
-    logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
-    logger.setLevel(logging.INFO)
-    logger.info("Starting dashboard update")
-
-    # Retrieve Weather Data
-    owmModule = OWMModule()
-    current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key)
 
     # Retrieve Calendar Data
-    currDate = dt.now(displayTZ).date()
-    calStartDatetime = displayTZ.localize(dt.combine(currDate, dt.min.time()))
-    calEndDatetime = displayTZ.localize(dt.combine(currDate + datetime.timedelta(days=numCalDaysToShow-1), dt.max.time()))
-    calModule = GcalModule()
-    eventList = calModule.get_events(
-        currDate, calendars, calStartDatetime, calEndDatetime, displayTZ, numCalDaysToShow)
-
-    # Retrieve Random Fact from OpenAI
-    oaiModule = OAIModule()
-    topic = oaiModule.get_random_fact(currDate, openai_api_key)
+    logger.info("Getting calendar data")
+    cal = Calendar(calendar_ids, display_timezone, calendar_days_to_show)
+    events = cal.get_daywise_events()
 
     # Render Dashboard Image
-    renderService = RenderHelper(imageWidth, imageHeight, rotateAngle)
-    renderService.process_inputs(currDate, current_weather, hourly_forecast, daily_forecast, eventList, numCalDaysToShow,
-                                 topic, path_to_server_image)
+    font_map = {
+            "extralight": "Lexend-ExtraLight.ttf", 
+            "light": "Lexend-Light.ttf", 
+            "regular": "Lexend-Regular.ttf", 
+            "bold": "Lexend-Bold.ttf",
+            "extrabold": "Lexend-ExtraBold.ttf",
+            "weather": "weathericons-regular-webfont.ttf"
+        }
+
+    f = FontFactory("/Users/mike.holmes/projects/home-display/render/font",font_map)
+
+    # path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
+    path_to_server_image = "/Users/mike.holmes/projects/home-display/dashboard.png"
+    r = Renderer(ff=f, image_width=imageWidth, image_height=imageHeight, 
+                 margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
+                 output_filepath=path_to_server_image
+                 )
+ 
+    def sort_by_time(events: list[dict]):
+        return sorted(events, key = lambda x: x.get("start_time", time.min))
+
+    events_today = sort_by_time(events.get(0, []))
+    events_tomorrow = sort_by_time(events.get(1, []))
+
+    logger.info("Rendering image")
+    r.render_all(
+        todays_date=cal.get_current_date(), 
+        weather=None,
+        events_today=events_today, 
+        events_tomorrow=events_tomorrow)
 
     logger.info("Completed dashboard update")
 
-
+    # # Retrieve Weather Data
+    # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
+    # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
+    # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
+    # owmModule = OWMModule()
+    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key, from_cache=True)
+    # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
+    # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
+    # # current_weather_temp=round(hourly_forecast[1]["temp"]),

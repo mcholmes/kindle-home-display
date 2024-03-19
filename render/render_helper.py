@@ -8,6 +8,8 @@ TODO:
 - decide what to do with weather. next N hours? just icon/temp? 
 """
 
+logger = logging.getLogger(__name__)
+
 class Renderer:
 
     def __init__(self, ff: FontFactory,
@@ -15,8 +17,6 @@ class Renderer:
                  top_row_y: int, spacing_between_sections: int,
                  output_filepath: str
                  ):
-            
-            self.logger = logging.getLogger('maginkdash')
             
             self.image = Image.new("RGB", (image_width, image_height), "white")
             self.draw = ImageDraw.Draw(self.image)
@@ -148,5 +148,5 @@ class Renderer:
         if not path.exists(fn):
             f = open(fn, "x")
             f.close()
-        else:
-            self.image.save(fn)
+        
+        self.image.save(fn)

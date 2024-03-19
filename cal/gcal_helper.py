@@ -25,14 +25,15 @@ class GCal:
 
     def __init__(self):        
         current_path = str(pathlib.Path(__file__).parent.absolute())
-        creds_path = os.path.join(current_path, "credentials.json")
+        creds_path = os.path.join(current_path, "credentials_service.json")
         token_path = os.path.join(current_path, "token.pickle")
         
-        if not self.is_token_valid(token_path): 
+        if not self.is_token_valid(token_path):
+            logger.info("Invalid token, regenerating.")
             self.generate_token(creds_path=creds_path, token_path=token_path)
 
-        # self.calendar = self.create_calendar_service_user(creds_path)
-        self.calendar = self.create_calendar_oauth(creds_path)
+        self.calendar = self.create_calendar_service_user(creds_path)
+        # self.calendar = self.create_calendar_oauth(creds_path)
         
         self.available_calendars = self.get_available_calendars()
 
@@ -85,6 +86,7 @@ class GCal:
         return available_calendars
 
     def accept_shared_calendar(self, calendar_id):
+        """ Only needed for service user """
         # https://issuetracker.google.com/issues/148804709#comment2
         calendar_list_entry = {'id': calendar_id}
         self.calendar.service.calendarList().insert(body=calendar_list_entry).execute()

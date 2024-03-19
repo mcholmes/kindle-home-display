@@ -10,6 +10,8 @@ from pytz import timezone
 from collections import defaultdict
 # from dataclasses import dataclass
 
+logger = logging.getLogger(__name__)
+
 class Calendar:
 
     """
@@ -19,7 +21,6 @@ class Calendar:
     """
 
     def __init__(self, calendar_list: list, display_timezone: timezone, num_days_to_show: int):
-        self.logger = logging.getLogger('maginkdash')
 
         self.num_days_to_show = num_days_to_show
         self.display_timezone = display_timezone

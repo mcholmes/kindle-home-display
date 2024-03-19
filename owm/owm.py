@@ -9,10 +9,10 @@ import json
 import string
 import datetime
 
-
+logger = logging.getLogger(__name__)
 class OWMModule:
     def __init__(self):
-        self.logger = logging.getLogger('maginkdash')
+        pass
 
     def get_owm_weather(self, lat, lon, api_key, cache : bool = False):
         url = "https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&appid=%s&exclude=minutely,alerts&units=metric" % (lat, lon, api_key)

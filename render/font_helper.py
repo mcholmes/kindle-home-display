@@ -3,10 +3,10 @@ import os
 import pathlib
 import logging
 
+logger = logging.getLogger(__name__)
 class FontFactory:
 
     def __init__(self, font_dir=None, font_map=None):
-        self.logger = logging.getLogger('maginkdash')
         self.default_size = 48 
         
         if font_dir is None:
@@ -47,7 +47,6 @@ class Font:
     """
 
     def __init__(self, file, size):
-        self.logger = logging.getLogger('maginkdash')
         
         f = ImageFont.truetype(file, size)
         self._font = f

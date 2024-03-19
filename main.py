@@ -31,20 +31,6 @@ if __name__ == '__main__':
     imageWidth = config['imageWidth']  # Width of image to be generated for display.
     imageHeight = config['imageHeight']  # Height of image to be generated for display.
     rotateAngle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
-    
-    openai_api_key = api["openai_api_key"]  # OpenAI API key. Required to retrieve response from ChatGPT
-    path_to_server_image = config["path_to_server_image"]  # Location to save the generated image
-
-
-    # # Retrieve Weather Data
-    # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-    # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
-    # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-    # owmModule = OWMModule()
-    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key, from_cache=True)
-    # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
-    # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-    # # current_weather_temp=round(hourly_forecast[1]["temp"]),
 
     # Retrieve Calendar Data
     logger.info("Getting calendar data")
@@ -62,6 +48,9 @@ if __name__ == '__main__':
         }
 
     f = FontFactory("/Users/mike.holmes/projects/home-display/render/font",font_map)
+
+    # path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
+    path_to_server_image = "/Users/mike.holmes/projects/home-display/dashboard.png"
     r = Renderer(ff=f, image_width=imageWidth, image_height=imageHeight, 
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
                  output_filepath=path_to_server_image
@@ -73,7 +62,6 @@ if __name__ == '__main__':
     events_today = sort_by_time(events.get(0, []))
     events_tomorrow = sort_by_time(events.get(1, []))
 
-
     logger.info("Rendering image")
     r.render_all(
         todays_date=cal.get_current_date(), 
@@ -82,3 +70,13 @@ if __name__ == '__main__':
         events_tomorrow=events_tomorrow)
 
     logger.info("Completed dashboard update")
+
+    # # Retrieve Weather Data
+    # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
+    # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
+    # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
+    # owmModule = OWMModule()
+    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key, from_cache=True)
+    # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
+    # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
+    # # current_weather_temp=round(hourly_forecast[1]["temp"]),

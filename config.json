@@ -6,9 +6,8 @@
   "numCalDaysToShow": 2,
   "lat": 51.424340,
   "lon": -0.142855,
-  "kindle_dims": 1448.1072,
   "imageWidth": 1072,
   "imageHeight": 1448,
   "rotateAngle": 0,
-  "path_to_server_image": "/Users/mike.holmes/projects/home-display/dashboard.png"
+  "path_to_server_image": "/var/www/html/dashboard.png"
 }

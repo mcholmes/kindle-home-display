@@ -54,8 +54,10 @@ class Renderer:
     def render_events(self, section_title: str, events: list[dict], y):
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
+        
         event_title = self.ff.get("light")
         event_reg = self.ff.get("regular")
+        event_nothing = self.ff.get("extralight")
 
         # Title text
         title_width = event_title.width(section_title)
@@ -80,6 +82,12 @@ class Renderer:
         # Bullets
         f = event_reg.font()
         bullet_height = event_reg.height()
+
+        if len(events) == 0:
+            self.draw.text((self.image_width/2, y), "", font=event_nothing.font(), fill="gray", anchor="ma")
+            y += bullet_height + 5
+            return y
+
         for index, event in enumerate(events):
             
             # Stop rendering events if we're past the bottom margin

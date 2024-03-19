@@ -14,7 +14,7 @@ class OWMModule:
     def __init__(self):
         self.logger = logging.getLogger('maginkdash')
 
-    def get_owm_weather(self, lat, lon, api_key):
+    def get_owm_weather(self, lat, lon, api_key, cache : bool = False):
         url = "https://api.openweathermap.org/data/3.0/onecall?lat=%s&lon=%s&appid=%s&exclude=minutely,alerts&units=metric" % (lat, lon, api_key)
         response = requests.get(url)
         data = json.loads(response.text)
@@ -25,22 +25,20 @@ class OWMModule:
         # print(json.dumps(forecast, indent=2))
         results = {"current_weather": curr_weather, "hourly_forecast": hourly_forecast, "daily_forecast": daily_forecast}
 
-        # TODO: delete this
-        cache = json.dumps(results)
-        weather_file = open("weather.json", "w")
-        weather_file.write(cache)
+        if cache:
+            cache = json.dumps(results)
+            weather_file = open("weather.json", "w")
+            weather_file.write(cache)
         
         return results
 
-    def get_weather(self, lat, lon, owm_api_key):
+    def get_weather(self, lat, lon, owm_api_key, from_cache=False):
         current_weather, daily_forecast = {}, {}
 
-        # TODO: delete this
-        try:
+        if from_cache:
             weather_file = open('weather.json')
             weather_results = json.load(weather_file)
-            print("Using cached weather results")
-        except FileNotFoundError:
+        else: 
             weather_results = self.get_owm_weather(lat, lon, owm_api_key)
         
         current_weather = weather_results["current_weather"]

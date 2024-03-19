@@ -11,6 +11,7 @@ google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
 openai = "*"
 gcsa = "*"
+requests = "*"
 
 [dev-packages]
 

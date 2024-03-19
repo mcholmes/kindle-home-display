@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 # Google calendar credentials
-credentials.json
+credentials*.json
 token.pickle
 api_keys.json
+home-display-415322-cc434c74209c.json

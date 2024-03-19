@@ -3,7 +3,7 @@ If using Google Calendar, make sure you have both the credentials.json and token
 If not, run quickstart.py first.
 """
 
-from gcal.gcal_helper import GCal
+from cal.gcal_helper import GCal
 import logging
 from datetime import timedelta, datetime, date, time
 from pytz import timezone

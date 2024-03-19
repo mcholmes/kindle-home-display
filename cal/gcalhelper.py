@@ -4,10 +4,6 @@
 This is where we retrieve events from the Google Calendar. Before doing so, make sure you have both the
 credentials.json and token.pickle in the same folder as this file. If not, run quickstart.py first.
 
-TODO:
-- move quickstart code here and call it from quickstart
-- change from a token to something I don't have to refresh manually
-
 """
 
 from __future__ import print_function
@@ -140,6 +136,5 @@ class GcalHelper:
             event_list.append(new_event)
 
         # We need to sort eventList because the event will be sorted in "calendar order" instead of hours order
-        # TODO: improve because of double cycle for now is not much cost
         event_list = sorted(event_list, key=lambda k: k['startDatetime'])
         return event_list

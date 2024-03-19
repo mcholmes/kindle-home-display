@@ -10,7 +10,7 @@ import logging
 import sys
 import json
 from pytz import timezone
-from gcal.gcal import Calendar
+from cal.cal import Calendar
 
 if __name__ == '__main__':
     logger = logging.getLogger('maginkdash')

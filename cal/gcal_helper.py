@@ -1,34 +1,110 @@
-from datetime import timedelta, datetime, date, time
+from datetime import datetime, date, time
+import pickle
 from gcsa.google_calendar import GoogleCalendar
 from gcsa import event
 import logging
 import pathlib
 import os
 
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+logger = logging.getLogger(__name__)
+
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+
 class GCal:
     """
-    Used for collecting events from multiple named Google Calendars.
+    Manages connections to Google Calendar and facilitates extractio of events.
 
     TODO:
-    - implement timezone in querying events
-    - move quickstart code here and call it from quickstart
-    - change from a token to something I don't have to refresh manually
+    - implement timezone logic
     """
 
-    def __init__(self):
-        self.logger = logging.getLogger('maginkdash')
-        
+    def __init__(self):        
         current_path = str(pathlib.Path(__file__).parent.absolute())
-        self.creds_path = os.path.join(current_path, "credentials.json")
-        self.calendar = GoogleCalendar(credentials_path=self.creds_path, read_only=True)
-        self.available_calendars = {c.calendar_id: c.summary_override for c in self.calendar.get_calendar_list()}
+        creds_path = os.path.join(current_path, "credentials.json")
+        token_path = os.path.join(current_path, "token.pickle")
+        
+        if not self.is_token_valid(token_path): 
+            self.generate_token(creds_path=creds_path, token_path=token_path)
+
+        # self.calendar = self.create_calendar_service_user(creds_path)
+        self.calendar = self.create_calendar_oauth(creds_path)
+        
+        self.available_calendars = self.get_available_calendars()
+
+    @staticmethod
+    def is_token_valid(token_path):
+
+        if not os.path.exists(token_path):
+            return False
+        else:
+            with open(token_path, 'rb') as token:
+                creds = pickle.load(token)
+        
+            return creds.valid
+
+    @staticmethod
+    def generate_token(creds_path, token_path):
+        """
+        This script needs to run first to obtain the token. Credentials.json must be in the same folder first.
+        To obtain Credentials.json, follow the instructions listed in the following link.
+        https://developers.google.com/calendar/api/quickstart/python
+        """
+
+        # If modifying these scopes, delete the file token.pickle.
+        
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists(token_path):
+            with open(token_path, 'rb') as token:
+                creds = pickle.load(token)
+        
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    creds_path, SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(token_path, 'wb') as token:
+                pickle.dump(creds, token)
     
+    def get_available_calendars(self):
+        available_calendars = {c.calendar_id: c.summary_override for c in self.calendar.get_calendar_list()}
+        if len(available_calendars) == 0:
+            raise ValueError("No calendars are available. If you're using a calendar shared to a GCP service account, then run `accept_shared_calendar(calendar_id)` first.")
+
+        return available_calendars
+
+    def accept_shared_calendar(self, calendar_id):
+        # https://issuetracker.google.com/issues/148804709#comment2
+        calendar_list_entry = {'id': calendar_id}
+        self.calendar.service.calendarList().insert(body=calendar_list_entry).execute()
+
+    @staticmethod
+    def create_calendar_oauth(creds_path):
+        return GoogleCalendar(credentials_path=creds_path, read_only=True)
+
+    @staticmethod
+    def create_calendar_service_user(creds_path):
+        creds = service_account.Credentials.from_service_account_file(creds_path, scopes=SCOPES)
+        
+        return GoogleCalendar(credentials=creds, read_only=True)
+
     def validate_calendars(self, calendars_to_validate: list[str]):
         if (calendars_to_validate is None) or len(calendars_to_validate) == 0:
             raise ValueError(f"No calendars to validate.")
         
         if (self.available_calendars is None) or len(self.available_calendars) == 0:
-            raise ValueError(f"No calendars to validate.")
+            raise ValueError(f"No calendars available.")
 
         invalid_calendars = []
         for calendar in calendars_to_validate:
@@ -117,6 +193,8 @@ class GCal:
                 additional_calendars = [additional_calendars]
 
             if isinstance(additional_calendars, list):
+                if len(additional_calendars) == 0: 
+                    raise ValueError("No calendars specified.")
                 self.validate_calendars(additional_calendars) # will throw error if an invalid calendar is detected
                 for id in additional_calendars:
                     events.extend(self.query_calendar_events(id=id, date_from=date_from, date_to=date_to))
@@ -147,3 +225,5 @@ class GCal:
 #     for key, value in d.items():
 #         print(f"    '{key}': '{value}'")
 #     print("}")
+    
+

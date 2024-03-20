@@ -27,7 +27,8 @@ classifiers = [
 dependencies = [
   "pytz",
   "pillow",
-  "gcsa"
+  "gcsa",
+  "requests"
 ]
 
 [project.urls]

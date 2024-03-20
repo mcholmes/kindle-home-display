@@ -48,6 +48,11 @@ if __name__ == '__main__':
     cal = Calendar(calendar_ids, display_timezone, calendar_days_to_show)
     events = cal.get_daywise_events()
 
+    count_events = 0
+    for day in events:
+        count_events += len(events[day])
+    logger.info(f"Retrieved {count_events} events across {len(events)} days.")
+
     # Render Dashboard Image
     font_map = {
             "extralight": "Lexend-ExtraLight.ttf",
@@ -80,7 +85,7 @@ if __name__ == '__main__':
         events_today=events_today,
         events_tomorrow=events_tomorrow)
 
-    logger.info("Completed dashboard update")
+    logger.info("Completed dashboard update.")
 
     # # Retrieve Weather Data
     # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.

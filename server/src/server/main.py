@@ -1,36 +1,47 @@
+from __future__ import annotations
+
+import json
 import logging
 import sys
-import json
 from datetime import time
-from pytz import timezone
+from os import path
+
 from cal.cal import Calendar
-from owm.owm import OWMModule
+from pytz import timezone
 from render.font_helper import FontFactory
 from render.render_helper import Renderer
 
 logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
+    script_dir = path.dirname(path.abspath(__file__))
     # Create and configure logger
-    logging.basicConfig(filename="logfile.log", format='%(asctime)s %(levelname)s - %(message)s', filemode='a')
+    log_path = path.join(script_dir, "logs", "server.log")
+    logging.basicConfig(
+        filename=log_path,
+        format="%(asctime)s %(levelname)s - %(message)s",
+        filemode="a")
     logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
     logger.setLevel(logging.INFO)
 
     # Basic configuration settings (user replaceable)
     logger.info("Getting config data")
-    with open('config.json') as configFile:
-        config = json.load(configFile)
+    with open(path.join(script_dir, 'config.json')) as config_file:
+        config = json.load(config_file)
 
-    with open('api_keys.json') as apiFile:
-        api = json.load(apiFile)
+    with open(path.join(script_dir, 'api_keys.json')) as api_file:
+        api = json.load(api_file)
 
     calendar_ids = config['calendars'] # Google Calendar IDs
     display_timezone = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
-    calendar_days_to_show = config['numCalDaysToShow'] # Number of days to retrieve from gcal, keep to 3 unless other parts of the code are changed too
-    
-    imageWidth = config['imageWidth']  # Width of image to be generated for display.
-    imageHeight = config['imageHeight']  # Height of image to be generated for display.
-    rotateAngle = config['rotateAngle']  # If image is rendered in portrait orientation, angle to rotate to fit screen
+    calendar_days_to_show = config['numCalDaysToShow'] # Number of days to retrieve from gcal
+
+    # Image dimensions in pixels
+    image_width = config['imageWidth']
+    image_height = config['imageHeight']
+
+    # If image is rendered portrait, rotate to fit screen
+    rotate_angle = config['rotateAngle']
 
     # Retrieve Calendar Data
     logger.info("Getting calendar data")
@@ -39,23 +50,23 @@ if __name__ == '__main__':
 
     # Render Dashboard Image
     font_map = {
-            "extralight": "Lexend-ExtraLight.ttf", 
-            "light": "Lexend-Light.ttf", 
-            "regular": "Lexend-Regular.ttf", 
+            "extralight": "Lexend-ExtraLight.ttf",
+            "light": "Lexend-Light.ttf",
+            "regular": "Lexend-Regular.ttf",
             "bold": "Lexend-Bold.ttf",
             "extrabold": "Lexend-ExtraBold.ttf",
             "weather": "weathericons-regular-webfont.ttf"
         }
 
-    f = FontFactory("/Users/mike.holmes/projects/home-display/render/font",font_map)
+    f = FontFactory(path.join(script_dir, "render", "font"),font_map)
 
     # path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
-    path_to_server_image = "/Users/mike.holmes/projects/home-display/dashboard.png"
-    r = Renderer(ff=f, image_width=imageWidth, image_height=imageHeight, 
+    path_to_server_image = path.join(script_dir, "dashboard.png")
+    r = Renderer(ff=f, image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
                  output_filepath=path_to_server_image
                  )
- 
+
     def sort_by_time(events: list[dict]):
         return sorted(events, key = lambda x: x.get("start_time", time.min))
 
@@ -64,9 +75,9 @@ if __name__ == '__main__':
 
     logger.info("Rendering image")
     r.render_all(
-        todays_date=cal.get_current_date(), 
+        todays_date=cal.get_current_date(),
         weather=None,
-        events_today=events_today, 
+        events_today=events_today,
         events_tomorrow=events_tomorrow)
 
     logger.info("Completed dashboard update")

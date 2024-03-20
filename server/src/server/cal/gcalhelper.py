@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This is where we retrieve events from the Google Calendar. Before doing so, make sure you have both the
 credentials.json and token.pickle in the same folder as this file. If not, run quickstart.py first.
 
 """
 
-from __future__ import print_function
-from datetime import datetime
+import logging
 import os.path
 import pathlib
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-import logging
 import pickle
+from datetime import datetime
+
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 
 class GcalHelper:
 
     def __init__(self):
         self.logger = logging.getLogger('maginkdash')
-        
+
         self.currPath = str(pathlib.Path(__file__).parent.absolute())
-        
+
         self.api = None
         self.authorise()
 
@@ -86,9 +85,6 @@ class GcalHelper:
     def is_multiday(start: datetime, end: datetime):
         # check if event stretches across multiple days
         return start.date() != end.date()
-    
-    def get_events_response():
-        
 
     def retrieve_events(self, calendars : list[str], startDatetime: datetime, endDatetime: datetime, localTZ):
         # Call the Google Calendar API and return a list of events that fall within the specified dates
@@ -103,7 +99,7 @@ class GcalHelper:
             response = self.api.events().list(calendarId=cal, timeMin=min_time_str,
                                            timeMax=max_time_str, singleEvents=True,
                                            orderBy='startTime').execute()
-            
+
 
             events_result.append(response)
 

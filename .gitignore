@@ -1,8 +1,17 @@
 
+# Mac files
+.DS_STORE
+
+# Device files
 /dist
 /kindle-dash-*.tgz
 /tmp
 /logs
+
+# Google calendar credentials
+credentials*.json
+token.pickle
+api_keys.json
 
 
 # Byte-compiled / optimized / DLL files
@@ -134,8 +143,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Google calendar credentials
-credentials*.json
-token.pickle
-api_keys.json

@@ -1,0 +1,7 @@
+# Google calendar credentials
+credentials*.json
+token.pickle
+api_keys.json
+
+# Ruff (from Hatch)
+.ruff_cache/

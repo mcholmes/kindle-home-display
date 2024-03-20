@@ -2,6 +2,11 @@ use chrono::Utc;
 use chrono_tz::Tz;
 
 const HELP: &str = "\
+A utility to calculate the remaining time, in seconds, until the next execution of a cron
+schedule. 
+It works for defined schedules (e.g. 30 minutes past every hour), but not for / syntax 
+(e.g. every 30 minutes).
+
 USAGE:
   next-wakeup --schedule '2,32 8-17 * * MON-FRI' --timezone 'Europe/Amsterdam'
   next-wakeup -s='2,32 8-17 * * MON-FRI' -tz='Europe/Amsterdam'

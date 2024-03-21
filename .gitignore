@@ -1,5 +1,5 @@
 # Mac files
-.DS_STORE
+*.DS_STORE
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

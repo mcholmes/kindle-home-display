@@ -66,8 +66,8 @@ def main():
 
     f = FontFactory(path.join(script_dir, "render", "font"),font_map)
 
-    # path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
-    path_to_server_image = path.join(script_dir, "dashboard.png")
+    path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
+    # path_to_server_image = path.join(script_dir, "dashboard.png")
     r = Renderer(ff=f, image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
                  output_filepath=path_to_server_image
@@ -98,5 +98,5 @@ def main():
     # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
     # # current_weather_temp=round(hourly_forecast[1]["temp"]),
 
-# if __name__ == '__main__':
-    # main()
+if __name__ == '__main__':
+    main()

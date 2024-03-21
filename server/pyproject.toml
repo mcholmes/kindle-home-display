@@ -38,7 +38,7 @@ Issues = "https://github.com/unknown/server/issues"
 Source = "https://github.com/unknown/server"
 
 [project.scripts]
-refresh-dashboard = "server.main:main"
+refresh-dashboard = "server.server:main"
 
 [tool.hatch.version]
 path = "src/server/__about__.py"

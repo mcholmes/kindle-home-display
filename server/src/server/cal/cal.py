@@ -7,8 +7,9 @@ import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from cal.gcal_helper import GCal
 from pytz import timezone
+
+from .gcal_helper import GCal
 
 # from dataclasses import dataclass
 

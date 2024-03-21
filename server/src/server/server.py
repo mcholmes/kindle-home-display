@@ -6,14 +6,15 @@ import sys
 from datetime import time
 from os import path
 
-from cal.cal import Calendar
 from pytz import timezone
-from render.font_helper import FontFactory
-from render.render_helper import Renderer
+
+from .cal.cal import Calendar
+from .render.font_helper import FontFactory
+from .render.render_helper import Renderer
 
 logger = logging.getLogger(__name__)
 
-if __name__ == '__main__':
+def main():
     script_dir = path.dirname(path.abspath(__file__))
     # Create and configure logger
     log_path = path.join(script_dir, "logs", "server.log")
@@ -96,3 +97,6 @@ if __name__ == '__main__':
     # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
     # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
     # # current_weather_temp=round(hourly_forecast[1]["temp"]),
+
+# if __name__ == '__main__':
+    # main()

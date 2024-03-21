@@ -7,7 +7,7 @@ name = "server"
 dynamic = ["version"]
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9" # default on Raspberry Pi
 license = "MIT"
 keywords = []
 authors = [
@@ -24,6 +24,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
+
 dependencies = [
   "pytz",
   "pillow",
@@ -36,6 +37,9 @@ Documentation = "https://github.com/unknown/server#readme"
 Issues = "https://github.com/unknown/server/issues"
 Source = "https://github.com/unknown/server"
 
+[project.scripts]
+refresh-dashboard = "server.main:main"
+
 [tool.hatch.version]
 path = "src/server/__about__.py"
 
@@ -43,6 +47,7 @@ path = "src/server/__about__.py"
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
+  "mypy>=1.0.0"
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
@@ -55,17 +60,19 @@ cov = [
   "test-cov",
   "cov-report",
 ]
+types = "mypy --install-types --non-interactive {args:src/server tests}"
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.9", "3.10", "3.11", "3.12"]
 
-[tool.hatch.envs.types]
-dependencies = [
-  "mypy>=1.0.0",
+[tool.hatch.build]
+artifacts = [
+  "src/server/api_keys.json",
+  "src/server/cal/credentials_service.json",
 ]
-[tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/server tests}"
-
+exclude = [
+  "/tests"
+]
 [tool.coverage.run]
 source_pkgs = ["server", "tests"]
 branch = true

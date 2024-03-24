@@ -8,6 +8,7 @@ from PIL import Image, ImageDraw
 
 if TYPE_CHECKING:
     from render.font_helper import FontFactory
+    from datetime import datetime
 
 """
 TODO:
@@ -140,12 +141,18 @@ class Renderer:
                        icon,
                        font=weather_icon.font(), fill="black", anchor="ls")
 
-    def render_all(self, todays_date, weather, events_today, events_tomorrow):
+    def render_last_updated(self, time: str):
+        f = self.ff.get("regular", 20).font()
+        text = f"Refreshed {time}"
+        self.draw.text((self.image_width//2, self.image_height - 0.5*self.margin_y), text, font=f, fill="gray", anchor="ms")
+
+    def render_all(self, todays_date: datetime, weather, events_today, events_tomorrow):
 
         # Render top row
         day = todays_date.strftime("%-d")
         day_of_week = todays_date.strftime("%a")
         month = todays_date.strftime("%b")
+        time = todays_date.strftime("%H:%M")
         self.render_date(day, day_of_week, month)
         # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 
@@ -156,6 +163,8 @@ class Renderer:
         # Render the "Tomorrow" section
         y += self.spacing_between_sections
         self.render_events("Tomorrow", events_tomorrow, y)
+
+        self.render_last_updated(time)
 
         # Save the image
         fn = self.output_filepath

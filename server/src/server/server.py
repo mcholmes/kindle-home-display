@@ -12,6 +12,8 @@ from .cal.cal import Calendar
 from .render.font_helper import FontFactory
 from .render.render_helper import Renderer
 
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
 logger = logging.getLogger(__name__)
 
 def main():
@@ -66,8 +68,8 @@ def main():
 
     f = FontFactory(path.join(script_dir, "render", "font"),font_map)
 
-    path_to_server_image = config["path_to_server_image"] # TODO: uncomment this for production
-    # path_to_server_image = path.join(script_dir, "dashboard.png")
+    # path_to_server_image = config["path_to_server_image"]
+    path_to_server_image = path.join(script_dir, "dashboard.png") # TODO: comment this for production
     r = Renderer(ff=f, image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
                  output_filepath=path_to_server_image
@@ -100,3 +102,24 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+class MyRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/dashboard.png':
+            self.send_response(200)
+            self.send_header('Content-type', 'image/png')
+            self.end_headers()
+            # Open the PNG image file and send its contents as response
+            with open('path/to/your/image.png', 'rb') as f:
+                self.wfile.write(f.read())
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(b'<html><body><h1>Not Found</h1></body></html>')
+
+def run(port=8000):
+    server_address = ('', port)
+    httpd = HTTPServer(server_address, MyRequestHandler)
+    print(f'Starting server on port {port}...')
+    httpd.serve_forever()

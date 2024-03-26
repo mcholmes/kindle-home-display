@@ -54,17 +54,17 @@ class Font:
         self._font = f
         self._height = f.getbbox("lq")[3] # max height for a line of this size, not its actual height
 
-    def width(self, text):
+    def width(self, text: str) -> int:
         return self._font.getbbox(text)[2]
 
-    def height(self, text=None):
+    def height(self, text : str = None) -> int:
         if text is None:
             return self._height
 
         return self._font.getbbox(text)[3]
 
-    def size(self, text):
+    def size(self, text: str) -> int:
         return self.width(text), self.height(text)
 
-    def font(self):
+    def image_font(self) -> ImageFont:
         return self._font

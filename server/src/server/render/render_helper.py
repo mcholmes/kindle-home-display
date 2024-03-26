@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING
 from PIL import Image, ImageDraw
 
 if TYPE_CHECKING:
-    from render.font_helper import FontFactory
+    from render.font_helper import FontFactory, Font
     from datetime import datetime
+    from PIL import ImageFont
 
 """
 TODO:
 - decide what to do with weather. next N hours? just icon/temp?
+- refactor Renderer to pass ImageDraw.Draw into the FontFactory so that Fonts can draw themselves and avoid repeated code
 """
 
 logger = logging.getLogger(__name__)
@@ -39,10 +41,33 @@ class Renderer:
 
             self.bullet_format = "•"
 
-    def render_event_text_only(self, position: tuple[int], event_text : str, font):
-        self.draw.text(position, f"{self.bullet_format} {event_text}", font=font, fill="black")
+    @staticmethod
+    def truncate_with_ellipsis(text: str, max_width: int, font: ImageFont) -> str:
+        
+        def width(x):
+            return font.getbbox(x)[2]
+        
+        if width(text) <= max_width:
+            return text
 
-    def render_event_with_time(self, position: tuple[int], event_time : str, event_text : str, font):
+        # Binary search to find the optimal truncation point
+        left = 0
+        right = len(text) - 1
+        while left <= right:
+            mid = (left + right) // 2
+            if width(text[:mid] + '...') <= max_width:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return text[:left - 1] + '...'
+
+    def render_event_text_only(self, position: tuple[int], event_text : str, font : ImageFont):
+        text = f"{self.bullet_format} {event_text}"
+        truncated_text = self.truncate_with_ellipsis(text=text, max_width=self.image_width-2*self.margin_x, font=font)    
+        self.draw.text(position, truncated_text, font=font, fill="black")
+
+    def render_event_with_time(self, position: tuple[int], event_time : str, event_text : str, font: ImageFont):
         x,y = position
 
         bullet = self.bullet_format + " "
@@ -56,9 +81,12 @@ class Renderer:
 
         self.draw.text((x, y), bullet, font=font, fill="black")
         self.draw.text((x_time, y), event_time, font=font, fill="gray")
-        self.draw.text((x_text, y), event_text, font=font, fill="black")
+        
+        max_width = self.image_width - (self.margin_x + x_text)
+        event_text_truncated = self.truncate_with_ellipsis(text=event_text, max_width=max_width, font=font)
+        self.draw.text((x_text, y), event_text_truncated, font=font, fill="black")
 
-    def render_events(self, section_title: str, events: list[dict], y):
+    def render_events(self, section_title: str, events: list[dict], y: int):
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
 
@@ -69,7 +97,7 @@ class Renderer:
         # Title text
         title_width = event_title.width(section_title)
         title_pos_x = self.image_width//2
-        self.draw.text((title_pos_x, y), section_title, font=event_title.font(), fill="gray", anchor="mm")
+        self.draw.text((title_pos_x, y), section_title, font=event_title.image_font(), fill="gray", anchor="mm")
 
         # Lines either side of title
         left_line_x_start = self.margin_x
@@ -87,11 +115,11 @@ class Renderer:
         y += event_title.height()  # Add spacing after the title
 
         # Bullets
-        f = event_reg.font()
+        f = event_reg.image_font()
         bullet_height = event_reg.height()
 
         if len(events) == 0:
-            self.draw.text((self.image_width/2, y), "", font=event_nothing.font(), fill="gray", anchor="ma")
+            self.draw.text((self.image_width/2, y), "", font=event_nothing.image_font(), fill="gray", anchor="ma")
             y += bullet_height + 5
             return y
 
@@ -119,15 +147,15 @@ class Renderer:
         date_num = self.ff.get("bold", 200)
         date_rest = self.ff.get("regular")
 
-        self.draw.text((self.margin_x, self.top_row_y), day, font=date_num.font(), fill="black", anchor="ls")
+        self.draw.text((self.margin_x, self.top_row_y), day, font=date_num.image_font(), fill="black", anchor="ls")
         day_width = date_num.width(day)
 
         self.draw.text((self.margin_x + day_width + 10, self.top_row_y),
                        day_of_week,
-                       font=date_rest.font(), fill="gray", anchor="ls")
+                       font=date_rest.image_font(), fill="gray", anchor="ls")
         self.draw.text((self.margin_x + day_width + 10, self.top_row_y - date_rest.height()),
                        month,
-                       font=date_rest.font(), fill="gray", anchor="ls")
+                       font=date_rest.image_font(), fill="gray", anchor="ls")
 
     def render_weather(self, text, icon):
 
@@ -136,13 +164,13 @@ class Renderer:
 
         self.draw.text((self.image_width - self.margin_x - weather_text.width(text), self.top_row_y),
                        text,
-                       font=weather_text.font(), fill="gray", anchor="ls")
+                       font=weather_text.image_font(), fill="gray", anchor="ls")
         self.draw.text((self.image_width - self.margin_x - weather_icon.width(icon), self.top_row_y - weather_text.height()),
                        icon,
-                       font=weather_icon.font(), fill="black", anchor="ls")
+                       font=weather_icon.image_font(), fill="black", anchor="ls")
 
     def render_last_updated(self, time: str):
-        f = self.ff.get("regular", 20).font()
+        f = self.ff.get("regular", 20).image_font()
         text = f"Refreshed {time}"
         self.draw.text((self.image_width//2, self.image_height - 0.5*self.margin_y), text, font=f, fill="gray", anchor="ms")
 

@@ -28,7 +28,7 @@ init() {
     exit 1
   fi
   
-  log "Starting dashboard with $REFRESH_SCHEDULE refresh..."
+  log "Starting dashboard with schedule: $REFRESH_SCHEDULE"
 
   initctl stop framework >/dev/null 2>&1
   initctl stop webreader >/dev/null 2>&1
@@ -129,3 +129,6 @@ main_loop() {
 
 init
 main_loop
+
+# Possible alternative approach that doesn't need an infinite while loop
+# https://github.com/4dcu-be/kual-dashboard/tree/master?tab=readme-ov-file

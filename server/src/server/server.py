@@ -4,47 +4,46 @@ import json
 import logging
 import sys
 from datetime import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from os import path
 
 from pytz import timezone
+from configparser import ConfigParser
 
 from .cal.cal import Calendar
-from .render.font_helper import FontFactory
 from .render.render_helper import Renderer
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
+script_dir = path.dirname(path.abspath(__file__))
 logger = logging.getLogger(__name__)
+log_path = path.join(script_dir, "logs", "server.log")
+logging.basicConfig(
+filename=log_path,
+format="%(asctime)s %(levelname)s - %(message)s",
+filemode="a")
+logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
+logger.setLevel(logging.INFO)
 
 def main():
-    script_dir = path.dirname(path.abspath(__file__))
-    # Create and configure logger
-    log_path = path.join(script_dir, "logs", "server.log")
-    logging.basicConfig(
-        filename=log_path,
-        format="%(asctime)s %(levelname)s - %(message)s",
-        filemode="a")
-    logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
-    logger.setLevel(logging.INFO)
-
-    # Basic configuration settings (user replaceable)
+    
     logger.info("Getting config data")
-    with open(path.join(script_dir, 'config.json')) as config_file:
-        config = json.load(config_file)
 
     with open(path.join(script_dir, 'api_keys.json')) as api_file:
         api = json.load(api_file)
 
-    calendar_ids = config['calendars'] # Google Calendar IDs
-    display_timezone = timezone(config['displayTZ']) # list of timezones - print(pytz.all_timezones)
-    calendar_days_to_show = config['numCalDaysToShow'] # Number of days to retrieve from gcal
+
+    config = ConfigParser()
+    config.read(path.join(script_dir, 'config.ini'))
+
+    display_timezone = timezone(config.get("calendar", "display_timezone")) # list of timezones - print(pytz.all_timezones)
+    calendar_days_to_show = config.getint("calendar", "days_to_show") # Number of days to retrieve from gcal
+
+    calendar_ids = config.get("calendar_ids", "holmbergs")
 
     # Image dimensions in pixels
-    image_width = config['imageWidth']
-    image_height = config['imageHeight']
+    image_width = config.getint("image", "width")
+    image_height = config.getint("image", "height")
 
-    # If image is rendered portrait, rotate to fit screen
-    rotate_angle = config['rotateAngle']
+    rotate_angle = config.getint("image", "rotate_angle") # If image is rendered portrait, rotate to fit screen
 
     # Retrieve Calendar Data
     logger.info("Getting calendar data")
@@ -68,10 +67,11 @@ def main():
 
     # path_to_server_image = config["path_to_server_image"]
     path_to_server_image = path.join(script_dir, "dashboard.png") # TODO: comment this for production
-    r = Renderer(font_map=font_map, 
+    r = Renderer(font_map=font_map,
                  image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
-                 output_filepath=path_to_server_image
+                 output_filepath=path_to_server_image,
+                 rotate_angle=rotate_angle
                  )
 
     def sort_by_time(events: list[dict]):

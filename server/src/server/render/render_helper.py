@@ -5,9 +5,10 @@ from os import path
 from typing import TYPE_CHECKING
 
 from PIL import Image, ImageDraw
-from .font_helper import FontFactory, Font
 
-if TYPE_CHECKING:    
+from .font_helper import Font, FontFactory
+
+if TYPE_CHECKING:
     from datetime import datetime
 
 """
@@ -23,7 +24,8 @@ class Renderer:
     def __init__(self, font_map: dict[str],
                  image_width: int, image_height: int, margin_x: int, margin_y: int,
                  top_row_y: int, spacing_between_sections: int,
-                 output_filepath: str
+                 output_filepath: str,
+                 rotate_angle: int = 0
                  ):
 
             self.output_filepath = output_filepath # needs to be full path with .png extension
@@ -41,11 +43,13 @@ class Renderer:
             self.top_row_y = top_row_y
             self.spacing_between_sections = spacing_between_sections
 
+            self.rotate_angle = rotate_angle
+
             self.bullet_format = "•"
 
     @staticmethod
     def truncate_with_ellipsis(text: str, max_width: int, font: Font) -> str:
-        
+
         if font.width(text) <= max_width:
             return text
 
@@ -63,7 +67,7 @@ class Renderer:
 
     def render_event_text_only(self, position: tuple[int], event_text : str, font : Font):
         text = f"{self.bullet_format} {event_text}"
-        truncated_text = self.truncate_with_ellipsis(text=text, max_width=self.image_width-2*self.margin_x, font=font)    
+        truncated_text = self.truncate_with_ellipsis(text=text, max_width=self.image_width-2*self.margin_x, font=font)
         font.write(position, truncated_text)
 
     def render_event_with_time(self, position: tuple[int], event_time : str, event_text : str, font: Font):
@@ -80,7 +84,7 @@ class Renderer:
 
         font.write((x, y), bullet)
         font.write((x_time, y), event_time, colour="gray")
-        
+
         max_width = self.image_width - (self.margin_x + x_text)
         event_text_truncated = self.truncate_with_ellipsis(text=event_text, max_width=max_width, font=font)
         font.write((x_text, y), event_text_truncated)
@@ -118,7 +122,7 @@ class Renderer:
 
         if len(events) == 0:
             # dummy draw. Can customise message if useful
-            event_nothing.write((self.image_width/2, y), "", colour="gray", anchor="ma") 
+            event_nothing.write((self.image_width/2, y), "", colour="gray", anchor="ma")
             y += bullet_height + 5
             return y
 
@@ -165,8 +169,9 @@ class Renderer:
         weather_text.write((self.image_width - self.margin_x - weather_text.width(text), self.top_row_y),
                        text,
                        colour="gray", anchor="ls")
-        weather_icon.write((self.image_width - self.margin_x - weather_icon.width(icon), self.top_row_y - weather_text.height()),
-                       icon, 
+        weather_icon.write((self.image_width - self.margin_x - weather_icon.width(icon),
+                            self.top_row_y - weather_text.height()),
+                       icon,
                        anchor="ls")
 
     def render_last_updated(self, time: str):
@@ -200,4 +205,6 @@ class Renderer:
             f = open(fn, "x")
             f.close()
 
+        print(self.rotate_angle)
+        self.image.rotate(self.rotate_angle)
         self.image.save(fn)

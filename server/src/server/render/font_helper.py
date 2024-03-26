@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import logging
 import os
 import pathlib
 
-from PIL import ImageFont, ImageDraw
+from PIL import ImageDraw, ImageFont
 
 logger = logging.getLogger(__name__)
 class FontFactory:
 
-    def __init__(self, draw : ImageDraw, font_dir=None, font_map=None):
+    def __init__(self, draw: ImageDraw, font_dir: str | None = None, font_map: dict[str] | None = None):
         self.default_size = 48
 
         if font_dir is None:
@@ -33,7 +35,7 @@ class FontFactory:
         #         "weather": "weathericons-regular-webfont.ttf"
         # }
 
-    def get(self, name, size: int = None):
+    def get(self, name: str, size: int | None = None):
         if size is None:
             size = self.default_size
 
@@ -47,7 +49,7 @@ class FontFactory:
 
 class Font:
     """
-    An abstraction over PIL's ImageFont. 
+    An abstraction over PIL's ImageFont.
     - Allows easier interrogation & reuse of calculated height.
     - Allows fonts to draw themselves, rather than passing around ImageFonts.
     """
@@ -63,7 +65,7 @@ class Font:
     def width(self, text: str) -> int:
         return self._font.getbbox(text)[2]
 
-    def height(self, text : str = None) -> int:
+    def height(self, text: str | None = None) -> int:
         if text is None:
             return self._height
 
@@ -71,9 +73,9 @@ class Font:
 
     def size(self, text: str) -> int:
         return self.width(text), self.height(text)
-    
-    def write(self, position: tuple, text: str, colour: str = "black", anchor: str = None) -> None:
+
+    def write(self, position: tuple, text: str, colour: str = "black", anchor: str | None = None) -> None:
         self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
-        
+
     def image_font(self) -> ImageFont:
         return self._font

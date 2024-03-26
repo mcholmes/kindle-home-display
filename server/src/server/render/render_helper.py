@@ -205,6 +205,5 @@ class Renderer:
             f = open(fn, "x")
             f.close()
 
-        print(self.rotate_angle)
-        self.image.rotate(self.rotate_angle)
-        self.image.save(fn)
+        image_rotated = self.image.rotate(self.rotate_angle, expand=True)
+        image_rotated.save(fn)

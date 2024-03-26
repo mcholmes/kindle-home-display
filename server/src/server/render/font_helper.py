@@ -2,12 +2,12 @@ import logging
 import os
 import pathlib
 
-from PIL import ImageFont
+from PIL import ImageFont, ImageDraw
 
 logger = logging.getLogger(__name__)
 class FontFactory:
 
-    def __init__(self, font_dir=None, font_map=None):
+    def __init__(self, draw : ImageDraw, font_dir=None, font_map=None):
         self.default_size = 48
 
         if font_dir is None:
@@ -22,6 +22,8 @@ class FontFactory:
         else:
             self.font_map = font_map
 
+        self.draw = draw
+
         # example:
         # font_map = {
         #         "light": "Lexend-Light.ttf",
@@ -31,7 +33,7 @@ class FontFactory:
         #         "weather": "weathericons-regular-webfont.ttf"
         # }
 
-    def get(self, name, size=None):
+    def get(self, name, size: int = None):
         if size is None:
             size = self.default_size
 
@@ -41,14 +43,18 @@ class FontFactory:
 
         font_file = os.path.join(self.font_dir, self.font_map[name])
 
-        return Font(font_file, size)
+        return Font(self.draw, font_file, size)
 
 class Font:
     """
-    An abstraction over PIL's ImageFont to allow easier interrogation & reuse of calculated height.
+    An abstraction over PIL's ImageFont. 
+    - Allows easier interrogation & reuse of calculated height.
+    - Allows fonts to draw themselves, rather than passing around ImageFonts.
     """
 
-    def __init__(self, file, size):
+    def __init__(self, draw: ImageDraw, file: str, size: int):
+
+        self._draw = draw
 
         f = ImageFont.truetype(file, size)
         self._font = f
@@ -65,6 +71,9 @@ class Font:
 
     def size(self, text: str) -> int:
         return self.width(text), self.height(text)
-
+    
+    def write(self, position: tuple, text: str, colour: str = "black", anchor: str = None) -> None:
+        self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
+        
     def image_font(self) -> ImageFont:
         return self._font

@@ -66,11 +66,10 @@ def main():
             "weather": "weathericons-regular-webfont.ttf"
         }
 
-    f = FontFactory(path.join(script_dir, "render", "font"),font_map)
-
     # path_to_server_image = config["path_to_server_image"]
     path_to_server_image = path.join(script_dir, "dashboard.png") # TODO: comment this for production
-    r = Renderer(ff=f, image_width=image_width, image_height=image_height,
+    r = Renderer(font_map=font_map, 
+                 image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
                  output_filepath=path_to_server_image
                  )

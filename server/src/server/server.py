@@ -94,7 +94,7 @@ def main():
     
     r = Renderer(font_map=font_map,
                  image_width=image_width, image_height=image_height,
-                 margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
+                 margin_x=100, margin_y=200, top_row_y=250, space_between_sections=50,
                  output_filepath=output_filepath,
                  rotate_angle=rotate_angle
                  )

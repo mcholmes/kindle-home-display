@@ -2,8 +2,7 @@ import logging
 from collections import defaultdict
 from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
-from datetime import date, datetime, timedelta, time
-
+from datetime import datetime, timedelta, time
 from zoneinfo import ZoneInfo
 
 from .gcal_helper import GCal
@@ -31,7 +30,7 @@ class Calendar:
     days_to_show            : int = Field(default=2, gt=0)
     exclude_default_calendar: bool = False
 
-    # Fields computed on init
+    # Fields computed post init
     current_date            : datetime = Field(init=False)
     start_date              : datetime = Field(init=False)
     end_date                : datetime = Field(init=False)

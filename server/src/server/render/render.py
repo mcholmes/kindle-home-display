@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from os import path
 from typing import TYPE_CHECKING
+from pydantic import ConfigDict, Field
+from pydantic.dataclasses import dataclass
 
 from PIL import Image, ImageDraw
 
@@ -15,38 +17,37 @@ if TYPE_CHECKING:
 """
 TODO:
 - decide what to do with weather. next N hours? just icon/temp?
-- dataclass
 """
 
 logger = logging.getLogger(__name__)
 script_dir = path.dirname(path.abspath(__file__))
 
+model_config = ConfigDict(arbitrary_types_allowed=True) # needed for PIL objects
+@dataclass(config=model_config)
 class Renderer:
+    output_filepath : str = Field(description="Full path with .png extension")
+    font_map : dict[str,str] = Field(description="Map of style names to font names")
+    image_height : int = Field(gt=0, description="Image height in pixels")
+    image_width : int = Field(gt=0, description="Image width in pixels")
+    margin_x : int = Field(default=0, ge=0, description="Left and right margins")
+    margin_y : int = Field(default=0, ge=0, description="Top and bottom margins")
+    top_row_y : int = Field(default=0, ge=0, description="Pixels from the top to place the date & weather")
+    space_between_sections : int = Field(default=0, ge=0, description="Vertical pixels between header, today, and tomorrow")
+    rotate_angle : int = Field(default=0, description="Angle in degrees to rotate the image after rendering. Useful for multiple-column layouts?")
+    fonts_file_dir : str = Field(default=path.join(script_dir, "font"), description="Path to directory containing .ttf fonts")
+    
+    # Field not presented for construction
+    bullet_format : int = Field(default="•",description="Default for bullet point marker")
 
-    def __init__(self, font_map: dict[str],
-                 image_width: int, image_height: int, margin_x: int, margin_y: int,
-                 top_row_y: int, spacing_between_sections: int,
-                 output_filepath: str,
-                 rotate_angle: int = 0
-                 ):
+    # Fields computed post-init
+    image   : Image = Field(init=False)
+    draw    : ImageDraw = Field(init=False)
+    ff      : FontFactory = Field(init=False)
 
-            self.output_filepath = output_filepath # needs to be full path with .png extension
-
-            self.image = Image.new("RGB", (image_width, image_height), "white")
-            self.draw = ImageDraw.Draw(self.image)
-
-            fonts_file_dir = path.join(script_dir, "font")
-            self.ff = FontFactory(self.draw, fonts_file_dir, font_map)
-
-            self.image_height = image_height
-            self.image_width = image_width
-            self.margin_x = margin_x
-            self.margin_y = margin_y
-            self.top_row_y = top_row_y
-            self.spacing_between_sections = spacing_between_sections
-            self.rotate_angle = rotate_angle
-
-            self.bullet_format = "•"
+    def __post_init__(self):
+        self.image = Image.new("RGB", (self.image_width, self.image_height), "white")
+        self.draw = ImageDraw.Draw(self.image)
+        self.ff = FontFactory(self.draw, self.fonts_file_dir, self.font_map)
 
     @staticmethod
     def truncate_with_ellipsis(text: str, max_width: int, font: Font) -> str:
@@ -66,29 +67,29 @@ class Renderer:
 
         return text[:left - 1] + '...'
 
-    def render_event_text_only(self, position: tuple[int], event_text : str, font : Font):
-        text = f"{self.bullet_format} {event_text}"
+    def render_activity(self, position: tuple[int], activity_text : str, font : Font):
+        text = f"{self.bullet_format} {activity_text}"
         truncated_text = self.truncate_with_ellipsis(text=text, max_width=self.image_width-2*self.margin_x, font=font)
         font.write(position, truncated_text)
 
-    def render_event_with_time(self, position: tuple[int], event_time : str, event_text : str, font: Font):
+    def render_activity_with_prefix(self, position: tuple[int], prefix : str, activity_text : str, font: Font):
         x,y = position
 
         bullet = self.bullet_format + " "
-        event_time = event_time + " "
+        prefix = prefix + " "
 
-        width_time = font.width(event_time)
-        width_bp = font.width(bullet)
+        width_prefix = font.width(prefix)
+        width_bullet = font.width(bullet)
 
-        x_time = x + width_bp
-        x_text = x_time + width_time
+        x_prefix = x + width_bullet
+        x_activity_text = x_prefix + width_prefix
 
         font.write((x, y), bullet)
-        font.write((x_time, y), event_time, colour="gray")
+        font.write((x_prefix, y), prefix, colour="gray")
 
-        max_width = self.image_width - (self.margin_x + x_text)
-        event_text_truncated = self.truncate_with_ellipsis(text=event_text, max_width=max_width, font=font)
-        font.write((x_text, y), event_text_truncated)
+        max_width = self.image_width - (self.margin_x + x_activity_text)
+        activity_text_truncated = self.truncate_with_ellipsis(text=activity_text, max_width=max_width, font=font)
+        font.write((x_activity_text, y), activity_text_truncated)
 
     def render_events(self, section_title: str, events: list[Event], y: int):
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
@@ -139,9 +140,9 @@ class Renderer:
             time = event.time_start_short
             position = (self.margin_x, y)
             if time is None:
-                self.render_event_text_only(position=position, event_text=text, font=event_regular)
+                self.render_activity(position=position, activity_text=text, font=event_regular)
             else:
-                self.render_event_with_time(position=position, event_time=time, event_text=text, font=event_regular)
+                self.render_activity_with_prefix(position=position, prefix=time, activity_text=text, font=event_regular)
 
             y += bullet_height + 5  # Add spacing between bullet points
 
@@ -191,11 +192,11 @@ class Renderer:
         # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 
         # Render the "Today" section
-        y = self.top_row_y + 2*self.spacing_between_sections # TODO: return this from render_top_row
+        y = self.top_row_y + 2*self.space_between_sections # TODO: return this from render_top_row
         y = self.render_events("Today", events_today, y)
 
         # Render the "Tomorrow" section
-        y += self.spacing_between_sections
+        y += self.space_between_sections
         self.render_events("Tomorrow", events_tomorrow, y)
 
         self.render_last_updated(time)

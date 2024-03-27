@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, Field
+from pydantic.dataclasses import dataclass
 from datetime import date, datetime, timedelta, time
 from typing import Optional
 """
@@ -7,8 +8,8 @@ TODO:
 - validate date_start < date_end
 """
 
-
-class Event(BaseModel):
+@dataclass
+class Event:
     summary         : str
     date_start      : date
     date_end        : Optional[date] = Field(None) # if none then it's all-day. if > start_date, then multi-day

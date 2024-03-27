@@ -146,7 +146,7 @@ class Renderer:
 
         return y
 
-    def render_date(self, day, day_of_week, month):
+    def render_date(self, day: str, day_of_week: str, month: str):
 
         date_num = self.ff.get("bold", 200)
         date_rest = self.ff.get("regular")
@@ -161,7 +161,7 @@ class Renderer:
                        month,
                        colour="gray", anchor="ls")
 
-    def render_weather(self, text, icon):
+    def render_weather(self, text: str, icon: str):
 
         weather_icon = self.ff.get("weather", 150)
         weather_text = self.ff.get("regular")
@@ -201,9 +201,9 @@ class Renderer:
 
         # Save the image
         fn = self.output_filepath
-        if not path.exists(fn):
-            f = open(fn, "x")
-            f.close()
+        # if not path.exists(fn):
+        #     f = open(fn, "x")
+        #     f.close()
 
         image_rotated = self.image.rotate(self.rotate_angle, expand=True)
         image_rotated.save(fn)

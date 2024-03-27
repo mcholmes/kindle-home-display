@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import argparse
 import logging
 import sys
 from datetime import time
@@ -11,49 +11,58 @@ from pytz import timezone
 from configparser import ConfigParser
 
 from .cal.cal import Calendar
-from .render.render_helper import Renderer
+from .render.render import Renderer
 
+# Configure logger
 script_dir = path.dirname(path.abspath(__file__))
 logger = logging.getLogger(__name__)
 log_path = path.join(script_dir, "logs", "server.log")
 logging.basicConfig(
-filename=log_path,
-format="%(asctime)s %(levelname)s - %(message)s",
-filemode="a")
+    filename=log_path,
+    format="%(asctime)s %(levelname)s - %(message)s",
+    filemode="a")
 logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
 logger.setLevel(logging.INFO)
 
+
 def main():
-    
+
+    # Parse CLI arguments
+    parser = argparse.ArgumentParser(description='Generates a png image from data retrieved from a calendar.')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    # TODO: add arguments for config file dir, log dir,  
+
+    args = parser.parse_args()    
+
+
+
     logger.info("Getting config data")
-
-    with open(path.join(script_dir, 'api_keys.json')) as api_file:
-        api = json.load(api_file)
-
-
     config = ConfigParser()
     config.read(path.join(script_dir, 'config.ini'))
 
+    # Calendar config
     display_timezone = timezone(config.get("calendar", "display_timezone")) # list of timezones - print(pytz.all_timezones)
     calendar_days_to_show = config.getint("calendar", "days_to_show") # Number of days to retrieve from gcal
-
     calendar_ids = config.get("calendar_ids", "holmbergs")
 
-    # Image dimensions in pixels
+    # Image config
     image_width = config.getint("image", "width")
     image_height = config.getint("image", "height")
-
     rotate_angle = config.getint("image", "rotate_angle") # If image is rendered portrait, rotate to fit screen
 
-    # Retrieve Calendar Data
-    logger.info("Getting calendar data")
+    # Output config
+    image_name = config.get("output", "image_name")
+    server_dir = config.get("output", "server_dir")
+
+    # Retrieve calendar events
+    logger.info("Getting calendar events...")
     cal = Calendar(calendar_ids, display_timezone, calendar_days_to_show)
     events = cal.get_daywise_events()
 
     count_events = 0
     for day in events:
         count_events += len(events[day])
-    logger.info(f"Retrieved {count_events} events across {len(events)} days.")
+    logger.info(f"  Retrieved {count_events} events across {len(events)} days")
 
     # Render Dashboard Image
     font_map = {
@@ -65,12 +74,13 @@ def main():
             "weather": "weathericons-regular-webfont.ttf"
         }
 
-    # path_to_server_image = config["path_to_server_image"]
-    path_to_server_image = path.join(script_dir, "dashboard.png") # TODO: comment this for production
+    output_dir = script_dir if args.debug else server_dir
+    output_filepath = path.join(output_dir, image_name)
+    
     r = Renderer(font_map=font_map,
                  image_width=image_width, image_height=image_height,
                  margin_x=100, margin_y=200, top_row_y=250, spacing_between_sections=50,
-                 output_filepath=path_to_server_image,
+                 output_filepath=output_filepath,
                  rotate_angle=rotate_angle
                  )
 
@@ -80,14 +90,14 @@ def main():
     events_today = sort_by_time(events.get(0, []))
     events_tomorrow = sort_by_time(events.get(1, []))
 
-    logger.info("Rendering image")
+    logger.info("Rendering image...")
     r.render_all(
         todays_date=cal.get_current_date(),
         weather=None,
         events_today=events_today,
         events_tomorrow=events_tomorrow)
 
-    logger.info("Completed dashboard update.")
+    logger.info("   Done")
 
     # # Retrieve Weather Data
     # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.

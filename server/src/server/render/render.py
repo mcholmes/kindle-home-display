@@ -10,10 +10,12 @@ from .font_helper import Font, FontFactory
 
 if TYPE_CHECKING:
     from datetime import datetime
+    from ..cal.event import Event
 
 """
 TODO:
 - decide what to do with weather. next N hours? just icon/temp?
+- dataclass
 """
 
 logger = logging.getLogger(__name__)
@@ -42,7 +44,6 @@ class Renderer:
             self.margin_y = margin_y
             self.top_row_y = top_row_y
             self.spacing_between_sections = spacing_between_sections
-
             self.rotate_angle = rotate_angle
 
             self.bullet_format = "•"
@@ -89,7 +90,7 @@ class Renderer:
         event_text_truncated = self.truncate_with_ellipsis(text=event_text, max_width=max_width, font=font)
         font.write((x_text, y), event_text_truncated)
 
-    def render_events(self, section_title: str, events: list[dict], y: int):
+    def render_events(self, section_title: str, events: list[Event], y: int):
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
 
@@ -134,8 +135,8 @@ class Renderer:
                 event_regular.write((self.margin_x, y), f"     + {remaining} more...")
                 break
 
-            text = event["summary"]
-            time = event.get("short_time", None)
+            text = event.summary
+            time = event.time_start_short
             position = (self.margin_x, y)
             if time is None:
                 self.render_event_text_only(position=position, event_text=text, font=event_regular)
@@ -179,7 +180,7 @@ class Renderer:
         f = self.ff.get("regular", 20)
         f.write((self.image_width//2, self.image_height - 0.5*self.margin_y), text, colour="gray", anchor="ms")
 
-    def render_all(self, todays_date: datetime, weather, events_today, events_tomorrow):
+    def render_all(self, todays_date: datetime, weather, events_today: list[Event], events_tomorrow: list[Event]):
 
         # Render top row
         day = todays_date.strftime("%-d")

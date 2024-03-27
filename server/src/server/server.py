@@ -4,13 +4,14 @@ import argparse
 import logging
 import sys
 from datetime import time
-from pytz import timezone
+import zoneinfo
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os import path
 
 from configparser import ConfigParser
 
 from .cal.cal import Calendar
+from .cal.event import Event
 from .render.render import Renderer
 
 # Configure logger
@@ -25,13 +26,26 @@ logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
 logger.setLevel(logging.INFO)
 
 
+"""
+TODO
+- better datetime handling: https://pypi.org/project/datetype/
+- command line arguments for
+         - config & api key file location
+         - log dir
+         - telling kindle to break loop & reboot cleanly
+
+
+"""
+
+
 def main():
 
     # Parse CLI arguments
     parser = argparse.ArgumentParser(description='Generates a png image from data retrieved from a calendar.')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
-    # TODO: add arguments for config file dir, log dir,  
+    """ 
 
+    """
     args = parser.parse_args()    
 
 
@@ -42,8 +56,8 @@ def main():
 
 
     # Calendar config
-    display_timezone = timezone(config.get("calendar", "display_timezone")) # list timezones: print(pytz.all_timezones)
-    calendar_days_to_show = config.getint("calendar", "days_to_show")
+    display_timezone = zoneinfo.ZoneInfo(config.get("calendar", "display_timezone")) # list timezones: print(zoneinfo.available_timezones())
+    days_to_show = config.getint("calendar", "days_to_show")
     calendar_ids = config.get("calendar_ids", "holmbergs")
 
     # Image config
@@ -57,7 +71,7 @@ def main():
 
     # Retrieve calendar events
     logger.info("Getting calendar events...")
-    cal = Calendar(calendar_ids, display_timezone, calendar_days_to_show)
+    cal = Calendar(calendar_ids=calendar_ids, display_timezone=display_timezone, days_to_show=days_to_show)
     events = cal.get_daywise_events()
 
     count_events = 0
@@ -85,15 +99,15 @@ def main():
                  rotate_angle=rotate_angle
                  )
 
-    def sort_by_time(events: list[dict]):
-        return sorted(events, key = lambda x: x.get("start_time", time.min))
+    def sort_by_time(events: list[Event]):
+        return sorted(events, key = lambda x: x.time_start or time.min)
 
     events_today = sort_by_time(events.get(0, []))
     events_tomorrow = sort_by_time(events.get(1, []))
 
     logger.info("Rendering image...")
     r.render_all(
-        todays_date=cal.get_current_date(),
+        todays_date=cal.current_date,
         weather=None,
         events_today=events_today,
         events_tomorrow=events_tomorrow)

@@ -26,7 +26,8 @@ classifiers = [
 ]
 
 dependencies = [
-  "pytz",
+  "tzdata", # fallback in case OS doesn't have IANA timezone data
+  "pydantic",
   "pillow",
   "gcsa",
   "requests"

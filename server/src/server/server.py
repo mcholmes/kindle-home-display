@@ -4,10 +4,10 @@ import argparse
 import logging
 import sys
 from datetime import time
+from pytz import timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from os import path
 
-from pytz import timezone
 from configparser import ConfigParser
 
 from .cal.cal import Calendar
@@ -40,9 +40,10 @@ def main():
     config = ConfigParser()
     config.read(path.join(script_dir, 'config.ini'))
 
+
     # Calendar config
-    display_timezone = timezone(config.get("calendar", "display_timezone")) # list of timezones - print(pytz.all_timezones)
-    calendar_days_to_show = config.getint("calendar", "days_to_show") # Number of days to retrieve from gcal
+    display_timezone = timezone(config.get("calendar", "display_timezone")) # list timezones: print(pytz.all_timezones)
+    calendar_days_to_show = config.getint("calendar", "days_to_show")
     calendar_ids = config.get("calendar_ids", "holmbergs")
 
     # Image config

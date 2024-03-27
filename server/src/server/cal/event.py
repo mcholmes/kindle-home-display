@@ -2,14 +2,14 @@ from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
 from datetime import date, datetime, timedelta, time
 from typing import Optional
-"""
-TODO:
-- validate if time_end is populated without time_start
-- validate date_start < date_end
-"""
+
 
 @dataclass
 class Event:
+    """
+    Data exchange format for calendar events
+    """
+
     summary         : str
     date_start      : date
     date_end        : Optional[date] = Field(None) # if none then it's all-day. if > start_date, then multi-day
@@ -18,6 +18,14 @@ class Event:
     description     : Optional[str] = Field(None)
     location        : Optional[str] = Field(None)
 
+    def __post_init__(self):
+        if self.time_end is not None:
+            assert self.time_start is not None
+
+        # TODO: fix this assertion error
+        # if self.date_end is not None:
+        #     assert self.date_start < self.date_end
+
     @classmethod
     def from_datetimes(cls, 
                              summary: str, 
@@ -25,16 +33,16 @@ class Event:
                              description: str | None, location: str | None):
 
         return cls(
-            date_start=cls._get_date(dt_start),
-            date_end=cls._get_date(dt_end),
-            time_start=cls._get_time(dt_start),
-            time_end=cls._get_time(dt_end),
+            date_start=cls._datetime_to_date(dt_start),
+            date_end=cls._datetime_to_date(dt_end),
+            time_start=cls._datetime_to_time(dt_start),
+            time_end=cls._datetime_to_time(dt_end),
             summary=summary,
             description=description,
             location=location)
 
     @staticmethod
-    def _get_time(x: datetime | date) -> time:
+    def _datetime_to_time(x: datetime | date) -> time:
         if isinstance(x, datetime): 
             return x.time()
         elif isinstance(x, date):
@@ -44,7 +52,7 @@ class Event:
             raise ValueError(err)
     
     @staticmethod
-    def _get_date(dt: datetime | date) -> date:
+    def _datetime_to_date(dt: datetime | date) -> date:
         """
         This is tricky because of how the standard library treats dates and datetimes.
         See https://github.com/python/mypy/issues/9015
@@ -91,7 +99,7 @@ class Event:
 
     def get_relative_days_start(self, date_to_compare: datetime):
         # Multi-day events which start before the comparison date will return a negative value
-        delta = self.date_start - self._get_date(date_to_compare)
+        delta = self.date_start - self._datetime_to_date(date_to_compare)
         return delta.days 
     
     @staticmethod

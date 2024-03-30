@@ -4,7 +4,7 @@ import logging
 import os
 import pathlib
 import pickle
-from datetime import date, datetime, time
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from .event import Event

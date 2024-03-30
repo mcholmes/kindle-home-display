@@ -1,22 +1,20 @@
-from pydantic import ConfigDict, Field
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, Field, PrivateAttr
 from datetime import date, datetime, timedelta, time
 from typing import Optional
 
 
-@dataclass
-class Event:
+class Event(BaseModel):
     """
     Data exchange format for calendar events
     """
 
     summary         : str
     date_start      : date
-    date_end        : Optional[date] = Field(None) # if none then it's all-day. if > start_date, then multi-day
-    time_start      : Optional[time] = Field(None) # if none then it's all-day.
-    time_end        : Optional[time] = Field(None) # mandatory if start_time is populated
-    description     : Optional[str] = Field(None)
-    location        : Optional[str] = Field(None)
+    date_end        : Optional[date] = Field(default=None) # if none then it's all-day. if > start_date, then multi-day
+    time_start      : Optional[time] = Field(default=None) # if none then it's all-day.
+    time_end        : Optional[time] = Field(default=None) # mandatory if start_time is populated
+    description     : Optional[str] = Field(default=None)
+    location        : Optional[str] = Field(default=None)
 
     def __post_init__(self):
         if self.time_end is not None:
@@ -25,6 +23,7 @@ class Event:
         # TODO: fix this assertion error
         # if self.date_end is not None:
         #     assert self.date_start < self.date_end
+            #  assert self.date_start < today()
 
     @classmethod
     def from_datetimes(cls, 
@@ -33,16 +32,16 @@ class Event:
                              description: str | None, location: str | None):
 
         return cls(
-            date_start=cls._datetime_to_date(dt_start),
-            date_end=cls._datetime_to_date(dt_end),
-            time_start=cls._datetime_to_time(dt_start),
-            time_end=cls._datetime_to_time(dt_end),
+            date_start=cls.datetime_to_date(dt_start),
+            date_end=cls.datetime_to_date(dt_end),
+            time_start=cls.datetime_to_time(dt_start),
+            time_end=cls.datetime_to_time(dt_end),
             summary=summary,
             description=description,
             location=location)
 
-    @staticmethod
-    def _datetime_to_time(x: datetime | date) -> time:
+    @classmethod
+    def datetime_to_time(cls, x: datetime | date) -> time:
         if isinstance(x, datetime): 
             return x.time()
         elif isinstance(x, date):
@@ -51,8 +50,8 @@ class Event:
             err = f"Input must be of type datetime or date, not {type(x)}"
             raise ValueError(err)
     
-    @staticmethod
-    def _datetime_to_date(dt: datetime | date) -> date:
+    @classmethod
+    def datetime_to_date(cls, dt: datetime | date) -> date:
         """
         This is tricky because of how the standard library treats dates and datetimes.
         See https://github.com/python/mypy/issues/9015
@@ -99,7 +98,7 @@ class Event:
 
     def get_relative_days_start(self, date_to_compare: datetime):
         # Multi-day events which start before the comparison date will return a negative value
-        delta = self.date_start - self._datetime_to_date(date_to_compare)
+        delta = self.date_start - self.datetime_to_date(date_to_compare)
         return delta.days 
     
     @staticmethod

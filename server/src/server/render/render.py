@@ -3,8 +3,7 @@ from __future__ import annotations
 import logging
 from os import path
 from typing import TYPE_CHECKING
-from pydantic import ConfigDict, Field
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, Field, PrivateAttr, PositiveInt, NonNegativeInt
 
 from PIL import Image, ImageDraw
 
@@ -21,33 +20,42 @@ TODO:
 
 logger = logging.getLogger(__name__)
 script_dir = path.dirname(path.abspath(__file__))
+class Renderer(BaseModel):
 
-model_config = ConfigDict(arbitrary_types_allowed=True) # needed for PIL objects
-@dataclass(config=model_config)
-class Renderer:
-    output_filepath : str = Field(description="Full path with .png extension")
-    font_map : dict[str,str] = Field(description="Map of style names to font names")
-    image_height : int = Field(gt=0, description="Image height in pixels")
-    image_width : int = Field(gt=0, description="Image width in pixels")
-    margin_x : int = Field(default=0, ge=0, description="Left and right margins")
-    margin_y : int = Field(default=0, ge=0, description="Top and bottom margins")
-    top_row_y : int = Field(default=0, ge=0, description="Pixels from the top to place the date & weather")
-    space_between_sections : int = Field(default=0, ge=0, description="Vertical pixels between header, today, and tomorrow")
-    rotate_angle : int = Field(default=0, description="Angle in degrees to rotate the image after rendering. Useful for multiple-column layouts?")
-    fonts_file_dir : str = Field(default=path.join(script_dir, "font"), description="Path to directory containing .ttf fonts")
+    class Config:
+        extra = "forbid"
+
+    # Mandatory fields
     
-    # Field not presented for construction
+    image_height : PositiveInt = Field(description="Image height in pixels")
+    image_width : PositiveInt = Field(description="Image width in pixels")
+
+    # Optional fields
+    fonts_file_dir : str = Field(default=path.join(script_dir, "font"), description="Path to directory containing .ttf fonts")
+    font_style_map : dict[str,str] = Field(description="Map of style names to font names", default={
+            "extralight": "Lexend-ExtraLight.ttf",
+            "light": "Lexend-Light.ttf",
+            "regular": "Lexend-Regular.ttf",
+            "bold": "Lexend-Bold.ttf",
+            "extrabold": "Lexend-ExtraBold.ttf",
+            "weather": "weathericons-regular-webfont.ttf"
+        })
+    margin_x : NonNegativeInt = Field(default=0, description="Left and right margins")
+    margin_y : NonNegativeInt = Field(default=0, description="Top and bottom margins")
+    top_row_y : NonNegativeInt = Field(default=0, description="Pixels from the top to place the date & weather")
+    space_between_sections : NonNegativeInt = Field(default=0, description="Vertical pixels between header, today, and tomorrow")
+    rotate_angle : int = Field(default=0, description="Angle in degrees to rotate the image after rendering. Useful for multiple-column layouts?")
     bullet_format : int = Field(default="•",description="Default for bullet point marker")
 
-    # Fields computed post-init
-    image   : Image = Field(init=False)
-    draw    : ImageDraw = Field(init=False)
-    ff      : FontFactory = Field(init=False)
-
-    def __post_init__(self):
-        self.image = Image.new("RGB", (self.image_width, self.image_height), "white")
-        self.draw = ImageDraw.Draw(self.image)
-        self.ff = FontFactory(self.draw, self.fonts_file_dir, self.font_map)
+    # Private fields computed post-init
+    _image   : Image = PrivateAttr(default=None)
+    _draw    : ImageDraw = PrivateAttr(default=None)
+    _ff      : FontFactory = PrivateAttr(default=None)
+    
+    def model_post_init(self, __context) -> None:
+        self._image = Image.new("RGB", (self.image_width, self.image_height), "white")
+        self._draw = ImageDraw.Draw(self._image)
+        self._ff = FontFactory(self._draw, self.fonts_file_dir, self.font_style_map)
 
     @staticmethod
     def truncate_with_ellipsis(text: str, max_width: int, font: Font) -> str:
@@ -95,9 +103,9 @@ class Renderer:
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
 
-        event_title = self.ff.get("light")
-        event_regular = self.ff.get("regular")
-        event_nothing = self.ff.get("extralight")
+        event_title = self._ff.get("light")
+        event_regular = self._ff.get("regular")
+        event_nothing = self._ff.get("extralight")
 
         # Title text
         title_width = event_title.width(section_title)
@@ -110,10 +118,10 @@ class Renderer:
         right_line_x_start = title_pos_x + (title_width//2 + 50)
         right_line_x_end = self.image_width - self.margin_x
 
-        self.draw.line([left_line_x_start, y,
+        self._draw.line([left_line_x_start, y,
                         left_line_x_end, y],
                         fill="gray", width=1)
-        self.draw.line([right_line_x_start, y,
+        self._draw.line([right_line_x_start, y,
                         right_line_x_end, y],
                         fill="gray", width=1)
 
@@ -150,8 +158,8 @@ class Renderer:
 
     def render_date(self, day: str, day_of_week: str, month: str):
 
-        date_num = self.ff.get("bold", 200)
-        date_rest = self.ff.get("regular")
+        date_num = self._ff.get("bold", 200)
+        date_rest = self._ff.get("regular")
 
         date_num.write((self.margin_x, self.top_row_y), day, anchor="ls")
         day_width = date_num.width(day)
@@ -165,8 +173,8 @@ class Renderer:
 
     def render_weather(self, text: str, icon: str):
 
-        weather_icon = self.ff.get("weather", 150)
-        weather_text = self.ff.get("regular")
+        weather_icon = self._ff.get("weather", 150)
+        weather_text = self._ff.get("regular")
 
         weather_text.write((self.image_width - self.margin_x - weather_text.width(text), self.top_row_y),
                        text,
@@ -178,10 +186,10 @@ class Renderer:
 
     def render_last_updated(self, time: str):
         text = f"Refreshed {time}"
-        f = self.ff.get("regular", 20)
+        f = self._ff.get("regular", 20)
         f.write((self.image_width//2, self.image_height - 0.5*self.margin_y), text, colour="gray", anchor="ms")
 
-    def render_all(self, todays_date: datetime, weather, events_today: list[Event], events_tomorrow: list[Event]):
+    def render_all(self, todays_date: datetime, weather, events_today: list[Event], events_tomorrow: list[Event]) -> None:
 
         # Render top row
         day = todays_date.strftime("%-d")
@@ -201,11 +209,13 @@ class Renderer:
 
         self.render_last_updated(time)
 
-        # Save the image
-        fn = self.output_filepath
-        # if not path.exists(fn):
-        #     f = open(fn, "x")
-        #     f.close()
+        self._image = (self._image.rotate(self.rotate_angle, expand=True))
 
-        image_rotated = self.image.rotate(self.rotate_angle, expand=True)
-        image_rotated.save(fn)
+    def get_image(self) -> Image:
+        return self._image
+    
+    def save_image(self, output_filepath: str) -> None:
+        """"
+        Full path with .png extension
+        """
+        self._image.save(output_filepath)

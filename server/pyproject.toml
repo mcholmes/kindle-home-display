@@ -30,7 +30,8 @@ dependencies = [
   "pydantic",
   "pillow",
   "gcsa",
-  "requests"
+  "requests",
+  "toml"
 ]
 
 [project.urls]

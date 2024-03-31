@@ -5,12 +5,9 @@ import os
 import pathlib
 import pickle
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
-from .event import Event
-
-if TYPE_CHECKING:
-    from gcsa import event as gcalevent
+from ..event import Event
 
 from gcsa.google_calendar import GoogleCalendar
 from google.auth.transport.requests import Request

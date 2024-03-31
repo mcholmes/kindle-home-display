@@ -16,7 +16,7 @@ class ImageConfig(BaseModel):
 class CalendarConfig(BaseModel):
     display_timezone: str = "Europe/London"
     days_to_show: PositiveInt = 2
-    ids: dict[str] = Field(description="Key-value pairs of calendar name and identifier. Intended for Google Calendar")
+    ids: dict[str, str] = Field(description="Key-value pairs of calendar name and identifier. Intended for Google Calendar")
 
 class WeatherConfig(BaseModel):
     latitude: float

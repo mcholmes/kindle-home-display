@@ -3,7 +3,7 @@ from collections import defaultdict
 from pydantic import PositiveInt, BaseModel
 from datetime import datetime, timedelta, time
 
-from .gcal_helper import GCal
+from .calendar_plugins.gcal import GCal
 from .event import Event
 
 logger = logging.getLogger(__name__)

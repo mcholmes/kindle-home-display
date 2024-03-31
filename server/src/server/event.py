@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field
 from datetime import date, datetime, timedelta, time
 from typing import Optional
 

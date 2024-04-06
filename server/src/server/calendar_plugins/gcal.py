@@ -24,20 +24,23 @@ class GCal:
     Manages connections to Google Calendar and facilitates extraction of events.
     """
 
-    def __init__(self):
-        current_path = str(pathlib.Path(__file__).parent.absolute())
-
-        creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
-        creds_path = os.path.join(current_path, creds_filename)
-        token_path = os.path.join(current_path, "token.pickle")
-
-        if not USE_SERVICE_ACCOUNT and (not self.is_token_valid(token_path)):
-            logger.info("Invalid token, regenerating.")
-            self.generate_oauth_token(creds_path=creds_path, token_path=token_path)
-
-        self.calendar = self.create_calendar_service_user(creds_path)
+    def __init__(self, creds_path):
+        
+        ### Uncomment if using general oauth flow ###
+        # current_path = str(pathlib.Path(__file__).parent.absolute())
+        # creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
+        # creds_path = os.path.join(current_path, creds_filename)
+        # token_path = os.path.join(current_path, "token.pickle")
+        # if not USE_SERVICE_ACCOUNT and (not self.is_token_valid(token_path)):
+        #     logger.info("Invalid token, regenerating.")
+        #     self.generate_oauth_token(creds_path=creds_path, token_path=token_path)
         # self.calendar = self.create_calendar_oauth(creds_path)
-
+        
+        if not os.path.exists(creds_path): 
+            err = f"No credentials file found at {creds_path}"
+            raise ValueError(err)
+        
+        self.calendar = self.create_calendar_service_user(creds_path)
         self.available_calendars = self.get_available_calendars()
 
     @staticmethod

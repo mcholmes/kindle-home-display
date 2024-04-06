@@ -3,7 +3,7 @@ import toml
 
 class ServerConfig(BaseModel):
     port: NonNegativeInt = Field(default=80, le=65535, description="Port to open connections on")
-    server_dir: str = Field(default="/var/www/html/", description="Folder to serve files from")
+    server_dir: str = Field(default="/var/www/html/", description="Folder to serve files, and write log to")
     image_uri: str = Field(default="/dashboard", description="Name of the URI for the image")
     command_uri: str = Field(default="/command", description="Name of the URI for sending commands, e.g. stop refreshing")
 
@@ -17,6 +17,7 @@ class CalendarConfig(BaseModel):
     display_timezone: str = "Europe/London"
     days_to_show: PositiveInt = 2
     ids: dict[str, str] = Field(description="Key-value pairs of calendar name and identifier. Intended for Google Calendar")
+    creds: str = Field(description="Path to credentials file. Intended for Google Calendar")
 
 class WeatherConfig(BaseModel):
     latitude: float

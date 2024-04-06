@@ -14,7 +14,7 @@ class Calendar(BaseModel):
     The function of this is mostly parsing / formatting.
     The current calendar provider is Google Calendar, but this is pluggable.
     """
-
+    credentials             : str 
     calendar_ids            : str | list[str]
     current_date            : datetime
     days_to_show            : PositiveInt = 2
@@ -35,7 +35,7 @@ class Calendar(BaseModel):
         Events within a day are unsorted.
         """
 
-        c = GCal()
+        c = GCal(self.credentials)
         events_unsorted : list[Event] = c.get_events(
             date_from = self.start_date,
             date_to = self.end_date,

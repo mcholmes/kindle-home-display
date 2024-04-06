@@ -1,137 +1,114 @@
 from __future__ import annotations
 
+from typing_extensions import Annotated
 import logging
-import sys
-from datetime import time
-from zoneinfo import ZoneInfo
-from os import path
-from datetime import datetime
+from os import path, mkdir, getcwd
+from pathlib import Path
+from types import SimpleNamespace
+
 from fastapi import FastAPI
 import typer
+import uvicorn
 
-from .cal import Calendar
-from .event import Event
-from .render import Renderer
-from .config import AppConfig, CalendarConfig, ImageConfig
+from .config import AppConfig
+from .app import App
 
-
-script_dir = path.dirname(path.abspath(__file__))
-### Configure logger ###
-
+### Get logger ###
+LOG_FILE_NAME = "app.log"
 logger = logging.getLogger(__name__)
-log_path = path.join(script_dir, "logs", "server.log")
 logging.basicConfig(
-    filename=log_path,
-    format="%(asctime)s %(levelname)s - %(message)s",
-    filemode="a")
-logger.addHandler(logging.StreamHandler(sys.stdout))  # print logger to stdout
-logger.setLevel(logging.INFO)
+    format="%(asctime)s %(levelname)s :: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-### Read config ###
-CONFIG = AppConfig.from_toml(path.join(script_dir, 'config.toml'))
+cli = typer.Typer()
 
-"""
-TODO
-- command line arguments for
-         - config & api key file location
-         - log dir
-         - telling kindle to break loop & reboot cleanly
-
-CLI:
-
-dashboard start
-dashboard stop
-dashboard once
-dashboard command break
-dashboard --help | -h
-dashboard --version
-dashboard --debug
-
-"""
-
-app = FastAPI()
-
-
-@app.get("/")
-def read_root() -> str:
-    return "TODO: help text here"
-
-@app.get("/logs")
-def get_logs():
-    return "TODO: log file here"
-
-@app.get("/dashboard")
-def run_once(debug=False, save_img=False):
-
-    display_timezone = ZoneInfo(CONFIG.calendar.display_timezone) # list timezones: print(zoneinfo.available_timezones())
-    current_date = datetime.now(display_timezone)
+def configure_logging(log_level: str, log_dir: str = None):
     
-    events = get_events(CONFIG.calendar, current_date)
-    events_today = sort_by_time(events.get(0, []))
-    events_tomorrow = sort_by_time(events.get(1, []))
+    valid_log_levels = ", ".join(logging.getLevelNamesMapping().keys())
     
-    image = generate_image(CONFIG.image, current_date, events_today, events_tomorrow)
+    if log_level.upper() in valid_log_levels:
+        logger.setLevel(log_level)
+    else:
+        err = f"Invalid log level: {log_level}. Possible values are {valid_log_levels}"
+        raise ValueError(err)
 
-    if save_img:
-        output_dir = script_dir if debug else CONFIG.server.server_dir
-        output_filepath = path.join(output_dir, "dashboard.png")
-        with open(output_filepath, "wb") as f: 
-            f.write(image)
+    if log_dir is not None:
+        if not path.exists(log_dir):
+            mkdir(log_dir)
+        
+        log_path = path.join(log_dir, LOG_FILE_NAME)
+        logger.addHandler(logging.FileHandler(log_path))
 
-    logger.info("   Done")
 
-def sort_by_time(events: list[Event]):
-        return sorted(events, key = lambda x: x.time_start or time.min)
+configType = Annotated[
+        Path, 
+        typer.Option(
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+            resolve_path=True
+        )]
 
-def get_events(config: CalendarConfig, current_date: datetime) -> list[Event]:
-    logger.info("Getting calendar events...")
-    
-    calendar_ids = config.ids.values()
-    
-    cal = Calendar(
-        calendar_ids=calendar_ids, 
-        current_date=current_date, 
-        days_to_show=config.days_to_show)
-    
-    events = cal.get_daywise_events()
+# https://jacobian.org/til/common-arguments-with-typer/
+@cli.callback()
+def setup(
+    ctx: typer.Context,
+    config: configType = Path(getcwd()) / "config.toml",
+    log_level: Annotated[str, typer.Option(help="Logging level")] = "INFO",
+    log_to_console: bool = False
+):
 
-    count_events = 0
-    for day in events:
-        count_events += len(events[day])
-    logger.info(f"  Retrieved {count_events} events across {len(events)} days")
+    if config.exists() and config.is_file():
+        app_config = AppConfig.from_toml(config)
+        
+        if log_to_console:
+            configure_logging(log_level)
+        else:
+            configure_logging(log_level, app_config.server.server_dir)
 
-    return events
+        _app = App(config=app_config)
+    else:
+        print("The config file doesn't exist")
+        typer.Abort()
 
-def get_weather():
-    ...
-    # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-    # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
-    # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-    # owmModule = OWMModule()
-    # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, owm_api_key, from_cache=True)
-    # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
-    # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-    # # current_weather_temp=round(hourly_forecast[1]["temp"]),
+    ctx.obj = SimpleNamespace(app = _app)
 
-def generate_image(config: ImageConfig, current_date: datetime, events_today: list[Event], events_tomorrow: list[Event]):
-    
-    logger.info("Rendering image...")
-    r = Renderer(image_width=CONFIG.image.width, 
-                 image_height=CONFIG.image.height,
-                 rotate_angle=CONFIG.image.rotate_angle,
-                 margin_x=100, margin_y=200, top_row_y=250, space_between_sections=50
-                 )
+@cli.command()
+def logs(
+    ctx: typer.Context,
+    limit: Annotated[int, typer.Option(help="Limit the number of log lines to retrieve (newest first)")] = None,
+):
 
-    r.render_all(
-        todays_date=current_date,
-        weather=None,
-        events_today=events_today,
-        events_tomorrow=events_tomorrow)
-    
-    return r.get_png()
+    app: App = ctx.obj.app
+    logs = app.get_logs(limit=limit)
+    print(logs)
 
-def main(config_dir: str):
-    run_once(debug=True, save_img=True)
+@cli.command()
+def once(
+    ctx: typer.Context
+):
+    app: App = ctx.obj.app
+    app.run_once(save_img=True)
+
+@cli.command()
+def start(
+    ctx: typer.Context
+):
+    app: App = ctx.obj.app
+    f = FastAPI()
+    f.include_router(app.router)
+    uvicorn.run(f, host="0.0.0.0", port=8000)
+
+def main():
+    cli()
 
 if __name__ == "__main__":
-    typer.run(main)
+    main()
+    
+"""
+CLI:
+dashboard stop
+dashboard send-break
+"""

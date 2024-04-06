@@ -3,8 +3,11 @@ from os import path
 from datetime import time
 from zoneinfo import ZoneInfo
 from datetime import datetime
+from os import path, mkdir
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, HTTPException
+from fastapi.responses import PlainTextResponse
+import uvicorn
 
 from .cal import Calendar
 from .event import Event
@@ -19,38 +22,59 @@ def sort_by_time(events: list[Event]):
 class App():
 
     config: AppConfig
-    image_name: str = "dashboard.png"
+    image_file_name: str = "dashboard.png"
+    log_file_name: str = "app.log"
     router: APIRouter = APIRouter()
 
-    def __init__(self, config: AppConfig) -> None:
+    def __init__(self, config: AppConfig): # -> dict[str]:
         self.config = config
-        self.router.add_api_route("/logs", self.get_logs, methods=["GET"])
+        self.router.add_api_route("/logs", response_class=PlainTextResponse, endpoint=self.get_logs, methods=["GET"])
         self.router.add_api_route("/dashboard", response_class=Response, endpoint=self.run_once, methods=["GET"])
+        self.router.add_api_route("/shutdown", endpoint=self.shutdown_server, methods=["GET"])
     
-    def get_logs(self, limit: int = None) -> str:
+    @staticmethod
+    def shutdown_server():
+        try:
+            uvicorn.Server.shutdown() # TODO: this doesn't seem to work
+            return {"message": "Server shutting down"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
         
-        # TODO: too implicit? better to explicitly set the log dir on init?
-        log_paths = [handler.baseFilename for handler in logger.handlers if isinstance(handler, logging.FileHandler)]
+    def configure_logging(self, log_level: str, log_to_console: bool = False):
+        """ Reconfigure the ROOT logger, not the module's logger """    
+        root_logger = logging.getLogger()
+        root_logger.setLevel(log_level)
 
-        if len(log_paths) == 0:
-            return "No log file found"
-        else:
-            with open(log_paths[0]) as f:
+        format = logging.Formatter(
+            fmt="%(asctime)s %(levelname)s %(name)s :: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+        if log_to_console:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(format)
+            root_logger.addHandler(console_handler)
+
+        log_dir = self.config.server.server_dir
+        log_path = path.join(log_dir, self.log_file_name)
+        if not path.exists(log_dir):
+            mkdir(log_dir)
+        
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setFormatter(format)
+        root_logger.addHandler(file_handler)
+
+    def get_logs(self) -> str:
+        
+        log_path = path.join(self.config.server.server_dir, self.log_file_name)
+
+        if path.exists(log_path):
+            with open(log_path) as f:
                 output = f.read()
-
-        # TODO: replace dummy output, handle when no file is present
-        # output = """log1
-        #                 log2
-        #                 log3""".splitlines()
-        
-        log_array = [x.strip() for x in output]
-        
-        if limit is not None:
-            logs = log_array[-limit:] # last N elements
         else:
-            logs = log_array
+            return "No log file found"
         
-        return "\n".join(logs)
+        return output
 
     def run_once(self, save_img=False) -> Response:
 
@@ -64,7 +88,7 @@ class App():
         image: bytes = self.generate_image(current_date, events_today, events_tomorrow)
 
         if save_img:
-            output_filepath = path.join(self.config.server.server_dir, self.image_name)
+            output_filepath = path.join(self.config.server.server_dir, self.image_file_name)
             with open(output_filepath, "wb") as f: 
                 f.write(image)
 
@@ -73,8 +97,6 @@ class App():
         return Response(content=image, media_type="image/png")
 
     def get_events(self, current_date: datetime) -> list[Event]:
-        
-        logger.info("Getting calendar events...")
         
         config = self.config.calendar
 
@@ -92,7 +114,7 @@ class App():
         count_events = 0
         for day in events:
             count_events += len(events[day])
-        logger.info(f"  Retrieved {count_events} events across {len(events)} days")
+        logger.info(f"Retrieved {count_events} events across {len(events)} days")
 
         return events
 

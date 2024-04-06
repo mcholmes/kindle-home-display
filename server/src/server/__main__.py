@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from typing_extensions import Annotated
-import logging
-from os import path, mkdir, getcwd
+from os import getcwd
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,33 +12,7 @@ import uvicorn
 from .config import AppConfig
 from .app import App
 
-### Get logger ###
-LOG_FILE_NAME = "app.log"
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s %(levelname)s :: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-    )
-
 cli = typer.Typer()
-
-def configure_logging(log_level: str, log_dir: str = None):
-    
-    valid_log_levels = ", ".join(logging.getLevelNamesMapping().keys())
-    
-    if log_level.upper() in valid_log_levels:
-        logger.setLevel(log_level)
-    else:
-        err = f"Invalid log level: {log_level}. Possible values are {valid_log_levels}"
-        raise ValueError(err)
-
-    if log_dir is not None:
-        if not path.exists(log_dir):
-            mkdir(log_dir)
-        
-        log_path = path.join(log_dir, LOG_FILE_NAME)
-        logger.addHandler(logging.FileHandler(log_path))
-
 
 configType = Annotated[
         Path, 
@@ -60,15 +33,12 @@ def setup(
     log_to_console: bool = False
 ):
 
+
     if config.exists() and config.is_file():
         app_config = AppConfig.from_toml(config)
-        
-        if log_to_console:
-            configure_logging(log_level)
-        else:
-            configure_logging(log_level, app_config.server.server_dir)
-
         _app = App(config=app_config)
+        _app.configure_logging(log_level, log_to_console)
+
     else:
         print("The config file doesn't exist")
         typer.Abort()
@@ -78,11 +48,11 @@ def setup(
 @cli.command()
 def logs(
     ctx: typer.Context,
-    limit: Annotated[int, typer.Option(help="Limit the number of log lines to retrieve (newest first)")] = None,
+    # limit: Annotated[int, typer.Option(help="Limit the number of log lines to retrieve (newest first)")] = None,
 ):
 
     app: App = ctx.obj.app
-    logs = app.get_logs(limit=limit)
+    logs = app.get_logs()
     print(logs)
 
 @cli.command()
@@ -109,6 +79,5 @@ if __name__ == "__main__":
     
 """
 CLI:
-dashboard stop
 dashboard send-break
 """

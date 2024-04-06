@@ -27,12 +27,26 @@ class App():
     device_log_file_name: str = "device.log"
     router: APIRouter = APIRouter()
 
-    def __init__(self, config: AppConfig): # -> dict[str]:
+    def __init__(self, config: AppConfig):
         self.config = config
-        self.router.add_api_route("/logs/server", response_class=PlainTextResponse, endpoint=self.get_server_logs, methods=["GET"])
-        # TODO: add a POST for device to send its logs back to server
-        self.router.add_api_route("/logs/device", response_class=PlainTextResponse, endpoint=self.get_device_logs, methods=["GET"])
+        
         self.router.add_api_route("/dashboard", response_class=Response, endpoint=self.run_once, methods=["GET"])
+
+        # TODO: send a signal to device to break out of its check loop
+        # self.router.add_api_route("/break/check", endpoint=self.check_break, methods=["GET"])
+        # self.router.add_api_route("/break/set_true", endpoint=self.set_break_true, methods=["GET"])
+        # self.router.add_api_route("/break/set_false", endpoint=self.set_break_false, methods=["GET"])
+
+        self.router.add_api_route("/logs/server", response_class=PlainTextResponse, endpoint=self.get_server_logs, methods=["GET"])
+        self.router.add_api_route("/logs/device", response_class=PlainTextResponse, endpoint=self.get_device_logs, methods=["GET"])
+        # TODO: add a POST for device to send its logs back to server
+        
+
+    def check_break(self) -> bool:
+        """
+        For device to check if it should break from its infinite loop.
+        """
+        ...
         
     def configure_logging(self, log_level: str, log_to_console: bool = False):
         """ Reconfigure the ROOT logger, not the module's logger """    

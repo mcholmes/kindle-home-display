@@ -43,7 +43,7 @@ Issues = "https://github.com/unknown/server/issues"
 Source = "https://github.com/unknown/server"
 
 [project.scripts]
-refresh-dashboard = "server:run_once"
+server = "server.cli:cli"
 
 [tool.hatch.version]
 path = "src/server/__about__.py"
@@ -71,10 +71,10 @@ types = "mypy --install-types --non-interactive {args:src/server tests}"
 python = ["3.9", "3.10", "3.11", "3.12"]
 
 [tool.hatch.build]
-artifacts = [
-  "src/server/api_keys.json",
-  "src/server/cal/credentials_service.json",
-]
+# artifacts = [
+#   "src/server/api_keys.json",
+#   "src/server/cal/credentials_service.json",
+# ]
 exclude = [
   "/tests"
 ]

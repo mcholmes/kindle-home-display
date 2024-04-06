@@ -23,22 +23,16 @@ class App():
 
     config: AppConfig
     image_file_name: str = "dashboard.png"
-    log_file_name: str = "app.log"
+    server_log_file_name: str = "server.log"
+    device_log_file_name: str = "device.log"
     router: APIRouter = APIRouter()
 
     def __init__(self, config: AppConfig): # -> dict[str]:
         self.config = config
-        self.router.add_api_route("/logs", response_class=PlainTextResponse, endpoint=self.get_logs, methods=["GET"])
+        self.router.add_api_route("/logs/server", response_class=PlainTextResponse, endpoint=self.get_server_logs, methods=["GET"])
+        # TODO: add a POST for device to send its logs back to server
+        self.router.add_api_route("/logs/device", response_class=PlainTextResponse, endpoint=self.get_device_logs, methods=["GET"])
         self.router.add_api_route("/dashboard", response_class=Response, endpoint=self.run_once, methods=["GET"])
-        self.router.add_api_route("/shutdown", endpoint=self.shutdown_server, methods=["GET"])
-    
-    @staticmethod
-    def shutdown_server():
-        try:
-            uvicorn.Server.shutdown() # TODO: this doesn't seem to work
-            return {"message": "Server shutting down"}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
         
     def configure_logging(self, log_level: str, log_to_console: bool = False):
         """ Reconfigure the ROOT logger, not the module's logger """    
@@ -56,18 +50,18 @@ class App():
             root_logger.addHandler(console_handler)
 
         log_dir = self.config.server.server_dir
-        log_path = path.join(log_dir, self.log_file_name)
+        log_path = path.join(log_dir, self.server_log_file_name)
         if not path.exists(log_dir):
+            print(f"Creating new log directory: {log_dir}")
             mkdir(log_dir)
         
         file_handler = logging.FileHandler(log_path)
         file_handler.setFormatter(format)
         root_logger.addHandler(file_handler)
 
-    def get_logs(self) -> str:
-        
-        log_path = path.join(self.config.server.server_dir, self.log_file_name)
+    def get_logs(self, file_name) -> str:
 
+        log_path = path.join(self.config.server.server_dir, file_name)
         if path.exists(log_path):
             with open(log_path) as f:
                 output = f.read()
@@ -75,6 +69,14 @@ class App():
             return "No log file found"
         
         return output
+    
+    def get_server_logs(self) -> str:
+        
+        return self.get_logs(self.server_log_file_name)
+
+    def get_device_logs(self) -> str:
+        
+        return self.get_logs(self.device_log_file_name)
 
     def run_once(self, save_img=False) -> Response:
 
@@ -92,8 +94,7 @@ class App():
             with open(output_filepath, "wb") as f: 
                 f.write(image)
 
-        logger.info("Done")
-        
+        logger.info("Rendered successfully")        
         return Response(content=image, media_type="image/png")
 
     def get_events(self, current_date: datetime) -> list[Event]:
@@ -114,7 +115,7 @@ class App():
         count_events = 0
         for day in events:
             count_events += len(events[day])
-        logger.info(f"Retrieved {count_events} events across {len(events)} days")
+        logger.debug(f"Retrieved {count_events} events across {len(events)} days")
 
         return events
 
@@ -133,7 +134,6 @@ class App():
         
         config = self.config.image
 
-        logger.info("Rendering image...")
         r = Renderer(image_width=config.width, 
                     image_height=config.height,
                     rotate_angle=config.rotate_angle,

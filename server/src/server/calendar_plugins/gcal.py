@@ -161,7 +161,7 @@ class GCal:
 
         min_time_str = date_from.isoformat()
         max_time_str = date_to.isoformat()
-        logger.info(f"Retrieving events between {min_time_str} and {max_time_str}...")
+        logger.debug(f"Retrieving events between {min_time_str} and {max_time_str}...")
 
         events = []
 
@@ -175,7 +175,7 @@ class GCal:
 
         if isinstance(additional_calendars, list):
             if len(additional_calendars) == 0:
-                self.logger.warning("Empty list of calendars given.")
+                logger.warning("Empty list of calendars given.")
             else:
                 self.validate_calendars(additional_calendars) # will throw error if an invalid calendar is detected
                 for cal_id in additional_calendars:
@@ -184,6 +184,6 @@ class GCal:
         else:
             warn_msg = f"""Invalid input for additional calendars.
                         Expected str or list[str], but got {type(additional_calendars)}."""
-            self.logger.warning(warn_msg)
+            logger.warning(warn_msg)
 
         return events

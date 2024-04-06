@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, PositiveInt, NonNegativeInt
 import toml
 
 class ServerConfig(BaseModel):
-    port: NonNegativeInt = Field(default=80, le=65535, description="Port to open connections on")
+    port: NonNegativeInt = Field(default=8080, le=65535, description="Port to open connections on")
     server_dir: str = Field(default="/var/www/html/", description="Folder to serve files, and write log to")
     image_uri: str = Field(default="/dashboard", description="Name of the URI for the image")
     command_uri: str = Field(default="/command", description="Name of the URI for sending commands, e.g. stop refreshing")

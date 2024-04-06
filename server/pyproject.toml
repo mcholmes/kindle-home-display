@@ -31,7 +31,10 @@ dependencies = [
   "pillow",
   "gcsa",
   "requests",
-  "toml"
+  "toml",
+  "fastapi",
+  "uvicorn[standard]",
+  "typer"
 ]
 
 [project.urls]
@@ -40,7 +43,7 @@ Issues = "https://github.com/unknown/server/issues"
 Source = "https://github.com/unknown/server"
 
 [project.scripts]
-refresh-dashboard = "server.server:main"
+refresh-dashboard = "server:run_once"
 
 [tool.hatch.version]
 path = "src/server/__about__.py"

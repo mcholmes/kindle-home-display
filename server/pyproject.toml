@@ -71,10 +71,6 @@ types = "mypy --install-types --non-interactive {args:src/server tests}"
 python = ["3.9", "3.10", "3.11", "3.12"]
 
 [tool.hatch.build]
-# artifacts = [
-#   "src/server/api_keys.json",
-#   "src/server/cal/credentials_service.json",
-# ]
 exclude = [
   "/tests"
 ]

@@ -3,14 +3,16 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime, time, timedelta
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, PositiveInt
 
 from server.calendar_plugins.gcal import GCal
-from server.event import Event
+
+if TYPE_CHECKING:
+    from server.event import Event
 
 logger = logging.getLogger(__name__)
-
 
 class Calendar(BaseModel):
     """

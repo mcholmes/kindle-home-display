@@ -28,7 +28,7 @@ def setup(
     ctx: typer.Context,
     config: config_type | None = None,
     log_level: Annotated[str, typer.Option(help="Logging level")] = "INFO",
-    log_to_console: bool = False
+    log_to_console: bool = False,
 ):
     """
     Command-line interface for an app which creates & serves an image to be polled by
@@ -38,16 +38,15 @@ def setup(
     in the directory from which this script is being run.
     """
     if config is None:
-        config = Path(getcwd()) / "config.toml",
+        config = Path(getcwd()) / "config.toml"
 
-    if config.exists() and config.is_file():
-        app_config = AppConfig.from_toml(config)
-        _app = App(config=app_config)
-        _app.configure_logging(log_level, log_to_console)
+    if not config.exists():
+        err = "No config.toml found."
+        raise FileNotFoundError(err)
 
-    else:
-        print("The config file doesn't exist!")
-        typer.Abort()
+    app_config = AppConfig.from_toml(config)
+    _app = App(config=app_config)
+    _app.configure_logging(log_level, log_to_console)
 
     ctx.obj = SimpleNamespace(app=_app)
 
@@ -59,14 +58,12 @@ def logs(
 ):
     app: App = ctx.obj.app
     logs = app.get_server_logs()
-    print(logs)
-
+    print(logs)  # noqa: T201
 
 @cli.command()
 def once(ctx: typer.Context):
     app: App = ctx.obj.app
-    app.run_once(save_img=True)
-
+    app.generate_image_and_save()
 
 @cli.command()
 def start(ctx: typer.Context):
@@ -74,8 +71,7 @@ def start(ctx: typer.Context):
     f = FastAPI()
     f.include_router(app.router)
 
-    uvicorn.run(f, host="0.0.0.0", port=app.config.server.port)
-
+    uvicorn.run(f, host="localhost", port=app.config.server.port)
 
 if __name__ == "__main__":
     cli()

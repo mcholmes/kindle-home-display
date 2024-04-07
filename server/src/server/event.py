@@ -7,29 +7,20 @@ from pydantic import BaseModel, Field
 
 class Event(BaseModel):
     """
-    Data exchange format for calendar events
+    Data exchange format for calendar events.
+    TODO: validate that
+        - given time_end not None, then time_start not None
+        - given date_end not None, date_start < date_end
+        - date_start < today
     """
 
     summary: str
     date_start: date
-    date_end: date | None = Field(
-        default=None
-    )  # if none then it's all-day. if > start_date, then multi-day
+    date_end: date | None = Field(default=None)  # if none then it's all-day. if > start_date, then multi-day
     time_start: time | None = Field(default=None)  # if none then it's all-day.
-    time_end: time | None = Field(
-        default=None
-    )  # mandatory if start_time is populated
+    time_end: time | None = Field(default=None)  # mandatory if start_time is populated
     description: str | None = Field(default=None)
     location: str | None = Field(default=None)
-
-    def __post_init__(self):
-        if self.time_end is not None:
-            assert self.time_start is not None
-
-        # TODO: fix this assertion error
-        # if self.date_end is not None:
-        #     assert self.date_start < self.date_end
-        #  assert self.date_start < today()
 
     @classmethod
     def from_datetimes(
@@ -54,11 +45,12 @@ class Event(BaseModel):
     def datetime_to_time(cls, x: datetime | date) -> time:
         if isinstance(x, datetime):
             return x.time()
-        elif isinstance(x, date):
+
+        if isinstance(x, date):
             return None
-        else:
-            err = f"Input must be of type datetime or date, not {type(x)}"
-            raise TypeError(err)
+
+        err = f"Input must be of type datetime or date, not {type(x)}"
+        raise TypeError(err)
 
     @classmethod
     def datetime_to_date(cls, dt: datetime | date) -> date:
@@ -75,11 +67,12 @@ class Event(BaseModel):
         if isinstance(dt, datetime):
             # This has to come first in the check because isinstance(my_datetime, date) = True!
             return dt.date()
-        elif isinstance(dt, date):
+
+        if isinstance(dt, date):
             return dt
-        else:
-            err = "Input is not a datetime or date: {dt}"
-            raise ValueError(err)
+
+        err = "Input is not a datetime or date: {dt}"
+        raise ValueError(err)
 
     @property
     def duration(self) -> timedelta:
@@ -124,9 +117,9 @@ class Event(BaseModel):
 
         if dt_object.hour == 0:
             datetime_str = f"12{datetime_str}am"
-        elif dt_object.hour == 12:
+        elif dt_object.hour == 12:  # noqa: PLR2004
             datetime_str = f"12{datetime_str}pm"
-        elif dt_object.hour > 12:
+        elif dt_object.hour > 12:  # noqa: PLR2004
             datetime_str = f"{dt_object.hour % 12!s}{datetime_str}pm"
         else:
             datetime_str = f"{dt_object.hour!s}{datetime_str}am"

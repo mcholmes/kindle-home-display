@@ -3,13 +3,16 @@ from __future__ import annotations
 import io
 import logging
 import pathlib
-from datetime import datetime
 from os import listdir, path
+from typing import TYPE_CHECKING
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, PrivateAttr
 
-from server.event import Event
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from server.event import Event
 
 """
 TODO:
@@ -290,6 +293,7 @@ class Renderer(BaseModel):
             anchor="ls",
         )
 
+    # TODO: this won't currently work!
     def render_weather(self, text: str, icon: str):
         weather_icon = self._ff.get("weather", 150)
         weather_text = self._ff.get("regular")
@@ -354,8 +358,7 @@ class Renderer(BaseModel):
     def get_png(self) -> bytes:
         with io.BytesIO() as output:
             self._image.save(output, format="PNG")
-            contents = output.getvalue()
-        return contents
+            return output.getvalue()
 
     def save_png(self, output_filepath: str) -> None:
         """ "

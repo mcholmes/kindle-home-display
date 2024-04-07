@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import pickle
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from gcsa.google_calendar import GoogleCalendar
 from google.auth.transport.requests import Request
@@ -11,6 +11,9 @@ from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from server.event import Event
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ class GCal:
     """
 
     def __init__(self, creds_path):
-        ### Uncomment if using general oauth flow ###
+        # Uncomment if using general oauth flow ###
         # current_path = str(pathlib.Path(__file__).parent.absolute())
         # creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
         # creds_path = os.path.join(current_path, creds_filename)
@@ -121,9 +124,11 @@ class GCal:
             raise ValueError(err)
 
         invalid_calendars = []
-        for calendar in calendars_to_validate:
-            if calendar not in self.available_calendars:
-                invalid_calendars.append(calendar)
+        # for calendar in calendars_to_validate:
+        #     if calendar not in self.available_calendars:
+        #         invalid_calendars.append(calendar)
+
+        invalid_calendars = [calendar for calendar in calendars_to_validate if calendar not in self.available_calendars]
 
         if len(invalid_calendars) > 0:
             err = f"""Invalid calendars: {", ".join(invalid_calendars)}.
@@ -170,12 +175,14 @@ class GCal:
         self,
         date_from: datetime,
         date_to: datetime,
-        additional_calendars: str | list = None,
+        additional_calendars: str | list | None = None,
         exclude_default_calendar: bool = False,
     ) -> list[Event]:
         min_time_str = date_from.isoformat()
         max_time_str = date_to.isoformat()
-        logger.debug(f"Retrieving events between {min_time_str} and {max_time_str}...")
+
+        msg = f"Retrieving events between {min_time_str} and {max_time_str}..."
+        logger.debug(msg)
 
         events = []
 

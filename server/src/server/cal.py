@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
-from pydantic import PositiveInt, BaseModel
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 
-from .calendar_plugins.gcal import GCal
-from .event import Event
+from pydantic import BaseModel, PositiveInt
+
+from server.calendar_plugins.gcal import GCal
+from server.event import Event
 
 logger = logging.getLogger(__name__)
+
 
 class Calendar(BaseModel):
     """
@@ -14,15 +18,16 @@ class Calendar(BaseModel):
     The function of this is mostly parsing / formatting.
     The current calendar provider is Google Calendar, but this is pluggable.
     """
-    credentials             : str 
-    calendar_ids            : str | list[str]
-    current_date            : datetime
-    days_to_show            : PositiveInt = 2
+
+    credentials: str
+    calendar_ids: str | list[str]
+    current_date: datetime
+    days_to_show: PositiveInt = 2
     exclude_default_calendar: bool = False
 
     @property
     def start_date(self) -> datetime:
-        return datetime.combine(self.current_date, time.min) # midnight today
+        return datetime.combine(self.current_date, time.min)  # midnight today
 
     @property
     def end_date(self) -> datetime:
@@ -36,18 +41,18 @@ class Calendar(BaseModel):
         """
 
         c = GCal(self.credentials)
-        events_unsorted : list[Event] = c.get_events(
-            date_from = self.start_date,
-            date_to = self.end_date,
-            additional_calendars = self.calendar_ids,
-            exclude_default_calendar = self.exclude_default_calendar
+        events_unsorted: list[Event] = c.get_events(
+            date_from=self.start_date,
+            date_to=self.end_date,
+            additional_calendars=self.calendar_ids,
+            exclude_default_calendar=self.exclude_default_calendar,
         )
 
         # Group events by date
         grouped_events = defaultdict(list)
         for event in events_unsorted:
             # max(x, 0) caters for multi-day events starting before current date.
-            relative_day = max(event.get_relative_days_start(self.current_date),0) 
+            relative_day = max(event.get_relative_days_start(self.current_date), 0)
             grouped_events[relative_day].append(event)
 
         # Now we have all keys, so convert defaultdict to regular dictionary

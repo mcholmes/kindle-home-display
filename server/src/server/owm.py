@@ -9,13 +9,15 @@ import logging
 import requests
 
 logger = logging.getLogger(__name__)
-class OWMModule:
-    def __init__(self):
-        pass
 
-    def get_owm_weather(self, lat, lon, api_key, cache : bool = False):
+
+class OWMModule:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    def get_owm_weather(self, lat: float, lon: float, cache: bool = False):
         url = f"https://api.openweathermap.org/data/3.0/onecall \
-                ?lat={lat}&lon={lon}&appid={api_key} \
+                ?lat={lat}&lon={lon}&appid={self.api_key} \
                 &exclude=minutely,alerts&units=metric"
         response = requests.get(url, timeout=30)
         data = json.loads(response.text)
@@ -24,9 +26,11 @@ class OWMModule:
         # print(json.dumps(curr_weather, indent=2))
         daily_forecast = data["daily"]
         # print(json.dumps(forecast, indent=2))
-        results = {"current_weather": curr_weather,
-                   "hourly_forecast": hourly_forecast,
-                   "daily_forecast": daily_forecast}
+        results = {
+            "current_weather": curr_weather,
+            "hourly_forecast": hourly_forecast,
+            "daily_forecast": daily_forecast,
+        }
 
         if cache:
             cache = json.dumps(results)
@@ -35,14 +39,14 @@ class OWMModule:
 
         return results
 
-    def get_weather(self, lat, lon, owm_api_key, from_cache=False):
+    def get_weather(self, lat: float, lon: float, from_cache: bool = False):
         current_weather, daily_forecast = {}, {}
 
         if from_cache:
-            with open('weather.json') as weather_file:
+            with open("weather.json") as weather_file:
                 weather_results = json.load(weather_file)
         else:
-            weather_results = self.get_owm_weather(lat, lon, owm_api_key)
+            weather_results = self.get_owm_weather(lat, lon)
 
         current_weather = weather_results["current_weather"]
         hourly_forecast = weather_results["hourly_forecast"]

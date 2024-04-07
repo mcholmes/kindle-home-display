@@ -16,7 +16,6 @@ authors = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -52,9 +51,11 @@ path = "src/server/__about__.py"
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
-  "mypy>=1.0.0"
+  "mypy>=1.0.0",
+  "pyupgrade"
 ]
 [tool.hatch.envs.default.scripts]
+upgrade = "pyupgrade --py39-plus src/server/*.py"
 test = "pytest {args:tests}"
 test-cov = "coverage run -m pytest {args:tests}"
 cov-report = [

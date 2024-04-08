@@ -33,7 +33,8 @@ dependencies = [
   "toml",
   "fastapi",
   "uvicorn[standard]",
-  "typer"
+  "typer",
+  "eval_type_backport"
 ]
 
 [project.urls]
@@ -112,4 +113,4 @@ config-path = "ruff_defaults.toml"
 extend = "ruff_defaults.toml"
 
 [tool.ruff.lint]
-# extend-select = ["PTH"]
+# extend-select = ["PTH"] TODO: refactor code to use Paths rather than strings

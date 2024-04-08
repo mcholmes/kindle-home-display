@@ -116,7 +116,6 @@ class Renderer(BaseModel):
         extra = "forbid"
 
     # Mandatory fields
-
     image_height: PositiveInt = Field(description="Image height in pixels")
     image_width: PositiveInt = Field(description="Image width in pixels")
 

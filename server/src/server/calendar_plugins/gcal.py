@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
 logger = logging.getLogger(__name__)
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARN)
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 USE_SERVICE_ACCOUNT = True

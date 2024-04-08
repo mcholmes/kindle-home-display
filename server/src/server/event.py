@@ -27,9 +27,9 @@ class Event(BaseModel):
         cls,
         summary: str,
         dt_start: datetime,
-        dt_end: datetime | None,
-        description: str | None,
-        location: str | None,
+        dt_end: datetime | None = None,
+        description: str | None = None,
+        location: str | None = None,
     ):
         return cls(
             date_start=cls.datetime_to_date(dt_start),
@@ -42,14 +42,18 @@ class Event(BaseModel):
         )
 
     @classmethod
-    def datetime_to_time(cls, x: datetime | date) -> time:
-        if isinstance(x, datetime):
-            return x.time()
+    def datetime_to_time(cls, dt: datetime | date) -> time:
 
-        if isinstance(x, date):
+        if dt is None:
             return None
 
-        err = f"Input must be of type datetime or date, not {type(x)}"
+        if isinstance(dt, datetime):
+            return dt.time()
+
+        if isinstance(dt, date):
+            return None
+
+        err = f"Input must be of type datetime or date, not {type(dt)}"
         raise TypeError(err)
 
     @classmethod
@@ -64,6 +68,9 @@ class Event(BaseModel):
             isinstance(d, date)         # True
             isinstance(dt, date)        # True
         """
+        if dt is None:
+            return None
+
         if isinstance(dt, datetime):
             # This has to come first in the check because isinstance(my_datetime, date) = True!
             return dt.date()

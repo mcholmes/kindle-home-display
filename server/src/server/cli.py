@@ -28,7 +28,7 @@ def setup(
     ctx: typer.Context,
     config: config_type | None = None,
     log_level: Annotated[str, typer.Option(help="Logging level")] = "INFO",
-    log_to_console: bool = False,
+    log_to_console: Annotated[bool, typer.Option(help="Print logging to console (as well as file)")] = False,  # noqa: FBT002
 ):
     """
     Command-line interface for an app which creates & serves an image to be polled by
@@ -49,7 +49,6 @@ def setup(
     _app.configure_logging(log_level, log_to_console)
 
     ctx.obj = SimpleNamespace(app=_app)
-
 
 @cli.command()
 def logs(

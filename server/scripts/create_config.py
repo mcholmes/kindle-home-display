@@ -1,3 +1,5 @@
+# TODO: document the config TOML
+
 from configparser import ConfigParser
 
 config = ConfigParser()

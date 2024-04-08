@@ -4,7 +4,7 @@ from os import mkdir, path
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from server.cal import Calendar
 from server.config import AppConfig
@@ -27,6 +27,8 @@ class App:
 
     def __init__(self, config: AppConfig):
         self.config = config
+
+        self.router.add_api_route("/", response_class=HTMLResponse,endpoint=self.root, methods=["GET"])
 
         self.router.add_api_route(
             "/dashboard",
@@ -53,6 +55,9 @@ class App:
             methods=["GET"],
         )
         # TODO: add a POST for device to send its logs back to server
+
+    def root(self) -> str:
+        return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
 
     def check_break(self) -> bool:
         """

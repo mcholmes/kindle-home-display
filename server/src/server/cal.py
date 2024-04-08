@@ -6,7 +6,6 @@ from typing import Union
 from pydantic import BaseModel, PositiveInt
 
 from server.calendar_plugins.gcal import GCal
-
 from server.event import Event
 
 logger = logging.getLogger(__name__)

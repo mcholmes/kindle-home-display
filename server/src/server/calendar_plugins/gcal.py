@@ -1,7 +1,8 @@
 import logging
 import os
 import pickle
-from typing import TYPE_CHECKING, Optional, Union
+from datetime import datetime
+from typing import Optional, Union
 
 from gcsa.google_calendar import GoogleCalendar
 from google.auth.transport.requests import Request
@@ -9,9 +10,6 @@ from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from server.event import Event
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARN)

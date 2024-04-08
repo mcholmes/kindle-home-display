@@ -2,12 +2,11 @@
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
-  "mypy>=1.0.0",
-  "pyupgrade"
+  "mypy>=1.0.0"
 ]
 
 [envs.default.scripts]
-upgrade = "pyupgrade --py39-plus src/server/*.py"
+server = "python -m server {args}"
 test = "pytest {args:tests}"
 test-cov = "coverage run -m pytest {args:tests}"
 cov-report = [

@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import logging
 import os
 import pickle
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 from gcsa.google_calendar import GoogleCalendar
 from google.auth.transport.requests import Request
@@ -138,9 +136,9 @@ class GCal:
 
     def query_events_api(
         self,
-        calendar_id: str | None = None,
-        date_from: datetime | None = None,
-        date_to: datetime | None = None,
+        calendar_id: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
     ) -> list[Event]:
         """
         Queries a given calendar API and converts responses into Event class.
@@ -176,7 +174,7 @@ class GCal:
         self,
         date_from: datetime,
         date_to: datetime,
-        additional_calendars: str | list | None = None,
+        additional_calendars: Optional[Union[str, list]] = None,
         exclude_default_calendar: bool = False,
     ) -> list[Event]:
         min_time_str = date_from.isoformat()

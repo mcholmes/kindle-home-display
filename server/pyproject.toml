@@ -34,7 +34,7 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "typer",
-  "eval_type_backport"
+  # "eval_type_backport"
 ]
 
 [project.urls]
@@ -48,34 +48,6 @@ server = "server.cli:cli"
 [tool.hatch.version]
 path = "src/server/__about__.py"
 
-[tool.hatch.envs.default]
-dependencies = [
-  "coverage[toml]>=6.5",
-  "pytest",
-  "mypy>=1.0.0",
-  "pyupgrade"
-]
-[tool.hatch.envs.default.scripts]
-upgrade = "pyupgrade --py39-plus src/server/*.py"
-test = "pytest {args:tests}"
-test-cov = "coverage run -m pytest {args:tests}"
-cov-report = [
-  "- coverage combine",
-  "coverage report",
-]
-cov = [
-  "test-cov",
-  "cov-report",
-]
-types = "mypy --install-types --non-interactive {args:src/server tests}"
-
-[[tool.hatch.envs.all.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12"]
-
-[tool.hatch.build]
-exclude = [
-  "/tests"
-]
 [tool.coverage.run]
 source_pkgs = ["server", "tests"]
 branch = true
@@ -106,11 +78,11 @@ show_error_codes = true
 warn_no_return = false
 warn_unused_ignores = true
 
-[tool.hatch.envs.hatch-static-analysis]
-config-path = "ruff_defaults.toml"
-
 [tool.ruff]
 extend = "ruff_defaults.toml"
 
 [tool.ruff.lint]
 # extend-select = ["PTH"] TODO: refactor code to use Paths rather than strings
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runtime types

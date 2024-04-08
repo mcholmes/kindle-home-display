@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Optional
 
 import toml
 from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
@@ -47,7 +47,7 @@ class AppConfig(BaseModel):
     server: ServerConfig
     image: ImageConfig
     calendar: CalendarConfig
-    weather: WeatherConfig | None = None
+    weather: Optional[WeatherConfig] = None
 
     @classmethod
     def from_toml(cls, file_path: str):

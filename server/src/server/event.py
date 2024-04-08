@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 from datetime import date, datetime, time, timedelta
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -16,20 +15,20 @@ class Event(BaseModel):
 
     summary: str
     date_start: date
-    date_end: date | None = Field(default=None)  # if none then it's all-day. if > start_date, then multi-day
-    time_start: time | None = Field(default=None)  # if none then it's all-day.
-    time_end: time | None = Field(default=None)  # mandatory if start_time is populated
-    description: str | None = Field(default=None)
-    location: str | None = Field(default=None)
+    date_end: Optional[date] = Field(default=None)  # if none then it's all-day. if > start_date, then multi-day
+    time_start: Optional[time] = Field(default=None)  # if none then it's all-day.
+    time_end: Optional[time] = Field(default=None)  # mandatory if start_time is populated
+    description: Optional[str] = Field(default=None)
+    location: Optional[str] = Field(default=None)
 
     @classmethod
     def from_datetimes(
         cls,
         summary: str,
         dt_start: datetime,
-        dt_end: datetime | None = None,
-        description: str | None = None,
-        location: str | None = None,
+        dt_end: Optional[datetime] = None,
+        description: Optional[str] = None,
+        location: Optional[str] = None,
     ):
         return cls(
             date_start=cls.datetime_to_date(dt_start),
@@ -42,7 +41,7 @@ class Event(BaseModel):
         )
 
     @classmethod
-    def datetime_to_time(cls, dt: datetime | date) -> time:
+    def datetime_to_time(cls, dt: Union[datetime, date]) -> time:
 
         if dt is None:
             return None
@@ -57,7 +56,7 @@ class Event(BaseModel):
         raise TypeError(err)
 
     @classmethod
-    def datetime_to_date(cls, dt: datetime | date) -> date:
+    def datetime_to_date(cls, dt: Union[datetime, date]) -> date:
         """
         This is tricky because of how the standard library treats dates and datetimes.
         See https://github.com/python/mypy/issues/9015

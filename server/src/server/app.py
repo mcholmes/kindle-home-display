@@ -1,20 +1,15 @@
-from __future__ import annotations
-
 import logging
 from datetime import datetime, time
 from os import mkdir, path
-from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
 from fastapi.responses import PlainTextResponse
 
 from server.cal import Calendar
+from server.config import AppConfig
+from server.event import Event
 from server.render import Renderer
-
-if TYPE_CHECKING:
-    from server.config import AppConfig
-    from server.event import Event
 
 logger = logging.getLogger(__name__)
 

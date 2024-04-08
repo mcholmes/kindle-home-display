@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from os import getcwd
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Annotated
+from typing import Annotated, Optional
 
 import typer
 import uvicorn
@@ -26,7 +24,7 @@ config_type = Annotated[
 @cli.callback()
 def setup(
     ctx: typer.Context,
-    config: config_type | None = None,
+    config: Optional[config_type] = None,
     log_level: Annotated[str, typer.Option(help="Logging level")] = "INFO",
     log_to_console: Annotated[bool, typer.Option(help="Print logging to console (as well as file)")] = False,  # noqa: FBT002
 ):

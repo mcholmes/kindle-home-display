@@ -1,18 +1,16 @@
-from __future__ import annotations
-
 import io
 import logging
 import pathlib
+
+# if TYPE_CHECKING:
+from datetime import datetime
 from os import listdir, path
-from typing import TYPE_CHECKING
+from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, PrivateAttr
 
-if TYPE_CHECKING:
-    from datetime import datetime
-
-    from server.event import Event
+from server.event import Event
 
 """
 TODO:
@@ -42,7 +40,7 @@ class Font:
     def width(self, text: str) -> int:
         return self._font.getbbox(text)[2]
 
-    def height(self, text: str | None = None) -> int:
+    def height(self, text: Optional[str] = None) -> int:
         if text is None:
             return self._height
 
@@ -56,7 +54,7 @@ class Font:
         position: tuple,
         text: str,
         colour: str = "black",
-        anchor: str | None = None,
+        anchor: Optional[str] = None,
     ) -> None:
         self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
 
@@ -68,8 +66,8 @@ class FontFactory:
     def __init__(
         self,
         draw: ImageDraw,
-        font_dir: str | None = None,
-        font_map: dict[str] | None = None,
+        font_dir: Optional[str] = None,
+        font_map: Optional[dict[str]] = None,
     ):
         self.default_size = 48
 
@@ -98,7 +96,7 @@ class FontFactory:
         #         "weather": "weathericons-regular-webfont.ttf"
         # }
 
-    def get(self, name: str, size: int | None = None):
+    def get(self, name: str, size: Optional[int] = None):
         if size is None:
             size = self.default_size
 
@@ -112,7 +110,7 @@ class FontFactory:
 
 
 class Renderer(BaseModel):
-    class Config:
+    class ConfigDict:
         extra = "forbid"
 
     # Mandatory fields
@@ -120,6 +118,7 @@ class Renderer(BaseModel):
     image_width: PositiveInt = Field(description="Image width in pixels")
 
     # Optional fields
+    background_colour: str = Field(default="white")
     fonts_file_dir: str = Field(
         default=path.join(script_dir, "font"),
         description="Path to directory containing .ttf fonts",
@@ -152,12 +151,12 @@ class Renderer(BaseModel):
     )
 
     # Private fields computed post-init
-    _image: Image = PrivateAttr(default=None)
-    _draw: ImageDraw = PrivateAttr(default=None)
-    _ff: FontFactory = PrivateAttr(default=None)
+    _image: Image = PrivateAttr()
+    _draw: ImageDraw = PrivateAttr()
+    _ff: FontFactory = PrivateAttr()
 
     def model_post_init(self, __context) -> None:
-        self._image = Image.new("RGB", (self.image_width, self.image_height), "white")
+        self._image = Image.new("RGB", (self.image_width, self.image_height), self.background_colour)
         self._draw = ImageDraw.Draw(self._image)
         self._ff = FontFactory(self._draw, self.fonts_file_dir, self.font_style_map)
 

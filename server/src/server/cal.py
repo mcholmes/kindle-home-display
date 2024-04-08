@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 import logging
 from collections import defaultdict
 from datetime import datetime, time, timedelta
-from typing import TYPE_CHECKING
+from typing import Union
 
 from pydantic import BaseModel, PositiveInt
 
 from server.calendar_plugins.gcal import GCal
 
-if TYPE_CHECKING:
-    from server.event import Event
+from server.event import Event
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +19,7 @@ class Calendar(BaseModel):
     """
 
     credentials: str
-    calendar_ids: str | list[str]
+    calendar_ids: Union[str, list[str]]
     current_date: datetime
     days_to_show: PositiveInt = 2
     exclude_default_calendar: bool = False

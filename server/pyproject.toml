@@ -33,8 +33,7 @@ dependencies = [
   "toml",
   "fastapi",
   "uvicorn[standard]",
-  "typer",
-  # "eval_type_backport"
+  "typer"
 ]
 
 [project.urls]

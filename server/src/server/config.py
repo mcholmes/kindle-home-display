@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
 
 
 class ServerConfig(BaseModel):
+    host: str = Field(
+        default="0.0.0.0",
+        description="Host to open connections on. Can be str (e.g. 'localhost') or IP address (e.g. 0.0.0.0)"
+    )
     port: NonNegativeInt = Field(
         default=8080, le=65535, description="Port to open connections on"
     )

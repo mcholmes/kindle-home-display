@@ -14,5 +14,6 @@ latitude = 51.424340
 longitude = -0.142855
 
 [server]
+host = "0.0.0.0"
 port = 8000
 server_dir = "/Users/mike.holmes/projects/kindle-home-display/server/"

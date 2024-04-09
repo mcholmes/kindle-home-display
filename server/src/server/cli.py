@@ -68,7 +68,7 @@ def start(ctx: typer.Context):
     f = FastAPI()
     f.include_router(app.router)
 
-    uvicorn.run(f, host="localhost", port=app.config.server.port)
+    uvicorn.run(f, host=app.config.server.host, port=app.config.server.port)
 
 if __name__ == "__main__":
     cli()

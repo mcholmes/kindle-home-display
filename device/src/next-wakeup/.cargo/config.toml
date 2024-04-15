@@ -1,0 +1,10 @@
+# according to https://en.wikipedia.org/wiki/Amazon_Kindle#Specifications
+# kindle PW3 is Freescale/NXP i.MX6 SoloLite 1 GHz, which is Cortex-A9.
+# Cortex-A9 is an ARMv7-A instruction set. So when compiling on MacOS, the following helps:
+# https://sigmaris.info/blog/2019/02/cross-compiling-rust-on-mac-os-for-an-arm-linux-router/
+
+[build]
+target = "armv7-unknown-linux-musleabihf"
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-gnueabihf-ld"

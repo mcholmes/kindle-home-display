@@ -28,9 +28,9 @@ dist/%: src/%
 	@cp "$<" "$@"
 
 dist/next-wakeup: ${NEXT_WAKEUP_SRC_FILES}
-	cd src/next-wakeup && cross build --release --target arm-unknown-linux-musleabi
-	cp src/next-wakeup/target/arm-unknown-linux-musleabi/release/next-wakeup dist/
-
+	cd src/next-wakeup && cargo build --release --target armv7-unknown-linux-musleabihf
+	cp src/next-wakeup/target/armv7-unknown-linux-musleabihf/release/next-wakeup dist/
+	
 dist/xh: tmp/xh
 	cd tmp/xh && cross build --release --target arm-unknown-linux-musleabi
 	docker run --rm \

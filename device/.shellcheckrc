@@ -4,5 +4,5 @@ shell=busybox
 disable=SC3043
 
 external-sources=true
-source=utils/logging.sh
+source=logging.sh
 source-path=SCRIPTDIR

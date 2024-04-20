@@ -4,7 +4,7 @@
 # https://sigmaris.info/blog/2019/02/cross-compiling-rust-on-mac-os-for-an-arm-linux-router/
 
 [build]
-target = "armv7-unknown-linux-musleabihf"
+target = "armv7-unknown-linux-musleabi"
 
-[target.armv7-unknown-linux-musleabihf]
+[target.armv7-unknown-linux-musleabi]
 linker = "arm-linux-gnueabihf-ld"

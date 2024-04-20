@@ -16,6 +16,12 @@
 pip install server
 ```
 
+## Usage
+
+```console
+nohup server start > ~/uvicorn.log &1>2
+```
+
 ## License
 
 `server` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.

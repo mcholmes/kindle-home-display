@@ -13,7 +13,7 @@ class ServerConfig(BaseModel):
         default=8080, le=65535, description="Port to open connections on"
     )
     server_dir: str = Field(
-        default="/var/www/html/", description="Folder to serve files, and write log to"
+        default="/var/www/html/", description="Folder to write files to (e.g. image files, logs). Typical for apache2"
     )
     image_uri: str = Field(
         default="/dashboard", description="Name of the URI for the image"

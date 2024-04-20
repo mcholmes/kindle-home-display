@@ -156,7 +156,7 @@ class Renderer(BaseModel):
     _ff: FontFactory = PrivateAttr()
 
     def model_post_init(self, __context) -> None:
-        self._image = Image.new("RGB", (self.image_width, self.image_height), self.background_colour)
+        self._image = Image.new("L", (self.image_width, self.image_height), self.background_colour)
         self._draw = ImageDraw.Draw(self._image)
         self._ff = FontFactory(self._draw, self.fonts_file_dir, self.font_style_map)
 

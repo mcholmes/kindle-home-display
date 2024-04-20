@@ -17,7 +17,8 @@ help:
 			print "  " $$1 \
 		}' Makefile
 
-dist: dist/next-wakeup dist/xh dist/local/state ${TARGET_FILES}
+# dist: dist/next-wakeup dist/xh dist/local/state ${TARGET_FILES}
+dist: dist/next-wakeup dist/local/state ${TARGET_FILES}
 
 tarball: dist
 	tar -C dist -cvzf kindle-dash-${VERSION}.tgz ./
@@ -27,9 +28,10 @@ dist/%: src/%
 	@mkdir -p $(@D)
 	@cp "$<" "$@"
 
+# this used to be 'cross build' not 'cargo build'... but was hard to get running on a Mac
 dist/next-wakeup: ${NEXT_WAKEUP_SRC_FILES}
-	cd src/next-wakeup && cargo build --release --target armv7-unknown-linux-musleabihf
-	cp src/next-wakeup/target/armv7-unknown-linux-musleabihf/release/next-wakeup dist/
+	cd src/next-wakeup && cargo build --release --target armv7-unknown-linux-musleabi
+	cp src/next-wakeup/target/armv7-unknown-linux-musleabi/release/next-wakeup dist/
 	
 dist/xh: tmp/xh
 	cd tmp/xh && cross build --release --target arm-unknown-linux-musleabi
@@ -53,7 +55,7 @@ watch:
 	watchexec -w src/ -p -- make
 
 format:
-	shfmt -i 2 -w -l src/**/*.sh
+	shfmt -i 4 -w -l src/**/*.sh
 
 # KOReader's ssh server will always ask for prompt even with password disabled,
 # so we use `expect` to send an enter keypress.
@@ -61,6 +63,11 @@ scp:
 	@echo "Usage: make scp source_files=<source_files>"
 	@echo "       Transfer files to remote host using scp"
 	expect -c 'spawn scp -P $(PORT) $(source_files) $(REMOTE_HOST):$(REMOTE_DIR); expect "*assword:" { send "\r" }; interact'
+
+scp-dist:
+	@echo "Usage: make scp source_files=<source_files>"
+	@echo "       Transfer files to remote host using scp"
+	expect -c 'spawn scp -r -P $(PORT) $(source_dir) $(REMOTE_HOST):$(REMOTE_DIR); expect "*assword:" { send "\r" }; interact'
 
 ssh:
 	expect -c 'spawn ssh -p $(PORT) $(REMOTE_HOST); expect "*assword:" { send "\r" }; expect "# " { send "cd $(REMOTE_DIR)\r" }; interact'

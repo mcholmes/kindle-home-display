@@ -1,0 +1,1 @@
+ssh-copy-id -i "/Users/mike.holmes/.ssh/id_kindle.pub" -p 2222 -t /mnt/us/koreader/settings/SSH/authorized_keys root@192.168.3.103

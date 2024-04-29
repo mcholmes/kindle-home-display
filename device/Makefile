@@ -5,9 +5,9 @@ NEXT_WAKEUP_SRC_FILES := $(shell find src/next-wakeup/src -name '*.rs')
 TARGET_FILES := $(SRC_FILES:src/%=dist/%)
 
 # Kindle scp params
-REMOTE_HOST := root@192.168.3.103
-REMOTE_DIR := /mnt/us/dashboard/
-PORT := 2222 # set by KOreader
+# REMOTE_HSOT should correspond to your .ssh/config file
+REMOTE_HOST := kindle
+REMOTE_DIR := /mnt/us/dashboard
 
 help:
 	@echo "Usage: make <target>"
@@ -57,23 +57,16 @@ watch:
 format:
 	shfmt -i 4 -w -l src/**/*.sh
 
-# KOReader's ssh server will always ask for prompt even with password disabled,
-# so we use `expect` to send an enter keypress.
-scp:
-	@echo "Usage: make scp source_files=<source_files>"
-	@echo "       Transfer files to remote host using scp"
-	expect -c 'spawn scp -P $(PORT) $(source_files) $(REMOTE_HOST):$(REMOTE_DIR); expect "*assword:" { send "\r" }; interact'
-
-scp-dist:
-	@echo "Usage: make scp source_files=<source_files>"
-	@echo "       Transfer files to remote host using scp"
-	expect -c 'spawn scp -r -P $(PORT) $(source_dir) $(REMOTE_HOST):$(REMOTE_DIR); expect "*assword:" { send "\r" }; interact'
-
+# For ease of interacting with device 
 ssh:
-	expect -c 'spawn ssh -p $(PORT) $(REMOTE_HOST); expect "*assword:" { send "\r" }; expect "# " { send "cd $(REMOTE_DIR)\r" }; interact'
+	ssh $(REMOTE_HOST) -t "cd $(REMOTE_DIR) && sh"
+
+push:
+	scp -r dist/* $(REMOTE_HOST):$(REMOTE_DIR)
+	scp -r KUAL/kindle-dash $(REMOTE_HOST):/mnt/us/extensions
 
 get-logs:
-	expect -c 'spawn scp -P $(PORT) $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log ./logs; expect "*assword:" { send "\r" }; interact'
+	scp $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log .
 
 
-.PHONY: clean watch tarball format scp ssh get-logs
+.PHONY: clean watch tarball format ssh push get-logs

@@ -2,7 +2,7 @@
 DEBUG=${DEBUG:-false}
 [[ "$DEBUG" = true ]] && set -x
 
-source logging.sh
+source "./logging.sh"
 
 DIR="$(dirname "$0")"
 
@@ -30,7 +30,6 @@ optimise_power() {
   initctl stop framework >/dev/null 2>&1
   initctl stop webreader >/dev/null 2>&1
   echo powersave >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-  lipc-set-prop com.lab126.powerd preventScreenSaver 1
 }
 
 display_sleep_screen() {
@@ -132,22 +131,28 @@ if [ $# -eq 0 ]; then
     exit 1
   fi
 
-  # Check RTC file exists
-  if [ ! -e "$RTC" ]; then
-    echo "Can't find the wake alarm at $RTC."
-    exit 1
-  fi
+
+  
+  lipc-set-prop com.lab126.powerd preventScreenSaver 1
+  if [ "$DEBUG" = false ]; then
+
+      # Check RTC file exists
+    if [ ! -e "$RTC" ]; then
+      echo "Can't find the wake alarm at $RTC."
+      exit 1
+    fi
+    
+    optimise_power
+  fi 
 
   log_info "Starting dashboard with $REFRESH_SCHEDULE refresh..."
-
-  optimise_power
   main_loop
 
 # Run once; no powersave
 elif [ $# -eq 1 ] && [ "$1" = "--once" ]; then
   "$FETCH_DASHBOARD_CMD" "$DASH_PNG"
-  /usr/sbin/eips -f -g "$DASH_PNG"
+  /usr/sbin/eips -f -g "$DASH_PNG" >/dev/null
 else
-  echo "Invalid usage. To loop, use zero arguments. To run once, use --once."
+  echo "Invalid usage. To loop, use no arguments. To run once, use --once."
   exit 1
 fi

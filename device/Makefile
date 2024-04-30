@@ -63,9 +63,16 @@ ssh:
 
 # Kindle doesn't have rsync installed. Some jailbreaks/extensions include it.
 # An armv7 binary is available here https://github.com/jbruechert/rsync-static
+start:
+	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)./start.sh"
+
+stop:
+	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)./stop.sh"
+
 rsync:
-	rsync -r --rsync-path=$(REMOTE_DIR)/rsync-arm 	dist/* $(REMOTE_HOST):$(REMOTE_DIR)
-	rsync -r --rsync-path=$(REMOTE_DIR)/rsync-arm 	KUAL/kindle-dash $(REMOTE_HOST):/mnt/us/extensions
+	rsync -ri --rsync-path=$(REMOTE_DIR)/rsync-arm 	dist/* $(REMOTE_HOST):$(REMOTE_DIR)
+	@echo ""
+	rsync -ri --rsync-path=$(REMOTE_DIR)/rsync-arm 	KUAL/kindle-dash $(REMOTE_HOST):/mnt/us/extensions
 
 push:
 	scp -r dist/* $(REMOTE_HOST):$(REMOTE_DIR)
@@ -77,4 +84,4 @@ print-logs:
 copy-logs:
 	scp $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log .
 
-.PHONY: clean watch tarball format ssh push print-logs
+.PHONY: clean watch tarball format ssh start stop rsync push print-logs copy-logs

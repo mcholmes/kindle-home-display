@@ -81,9 +81,11 @@ optimise_power() {
         # When framework is stopped, it sends a SIGTERM to everything it started.
         # Trap so we don't get killed if we were launched by KUAL.
         # https://www.mobileread.com/forums/showpost.php?p=2639195&postcount=5
+
+        stop stackdumpd # trying to not generate a KPP / TODO core dump when stopping other services... but doesn't work.
+
         trap "" SIGTERM
-        stop framework # main interface. 
-        usleep 1250000 # so we don't start before the blank screen
+        stop lab126_gui # `stop framework` causes a crash
         trap - SIGTERM
 
         # OTA update related processes
@@ -98,14 +100,19 @@ optimise_power() {
         stop webreader # browser
         
         # Of the below, unsure which, if any, to stop to further optimise battery. 
-        # They were copied from a bunch of similar projects.
+        # They were copied from a bunch of similar projects, e.g.
+        # https://www.martinpham.com/2023/01/07/reviving-unused-kindle-ebooks/
+        # https://github.com/mattzzw/kindle-weatherstation/blob/master/kindle-weather.sh
         # stop x 
         # stop mcsd
         # stop archive
         # stop dynconfig
         # stop dpmd 
         # stop appmgrd # application manager
-        # stop stackdumpd
+
+        sleep 2 # so we don't start before the blank screen
+
+        eips -c -f # do a full screen clear
         ;;
     *)
         echo "Unrecognised device $DEVICE_TYPE. Must be K4, PW2 or PW3."

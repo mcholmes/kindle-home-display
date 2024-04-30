@@ -108,8 +108,6 @@ optimise_power() {
         # stop dpmd 
         # stop appmgrd # application manager
         # stop stackdumpd
-
-        
         ;;
     *)
         echo "Unrecognised device $DEVICE_TYPE. Must be K4, PW2 or PW3."

@@ -64,10 +64,10 @@ ssh:
 # Kindle doesn't have rsync installed. Some jailbreaks/extensions include it.
 # An armv7 binary is available here https://github.com/jbruechert/rsync-static
 start:
-	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)./start.sh"
+	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)/start.sh"
 
 stop:
-	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)./stop.sh"
+	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)/stop.sh"
 
 rsync:
 	rsync -ri --rsync-path=$(REMOTE_DIR)/rsync-arm 	dist/* $(REMOTE_HOST):$(REMOTE_DIR)

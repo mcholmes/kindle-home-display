@@ -10,7 +10,6 @@ if [ -z "$test_ip" ]; then
     exit 1
 fi
 
-# TODO: neither of these are used yet
 wait_wlan_connected() {
   # shellcheck disable=SC2046
   return $(lipc-get-prop com.lab126.wifid cmState | grep CONNECTED | wc -l)

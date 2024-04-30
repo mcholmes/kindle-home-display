@@ -77,10 +77,7 @@ optimise_power() {
         /etc/init.d/lipc-daemon stop
         /etc/init.d/powerd stop
         ;;
-    "PW2" | "PW3")
-        # TODO: which of these need doing? what about framework & webreader?
-        # TODO: use initctl stop instead of stop?
-        
+    "PW2" | "PW3")       
         # When framework is stopped, it sends a SIGTERM to everything it started.
         # Trap so we don't get killed if we were launched by KUAL.
         # https://www.mobileread.com/forums/showpost.php?p=2639195&postcount=5
@@ -100,7 +97,8 @@ optimise_power() {
         # Other stuff
         stop webreader # browser
         
-        # TODO: Don't know which if any I should stop of these:
+        # Of the below, unsure which, if any, to stop to further optimise battery. 
+        # They were copied from a bunch of similar projects.
         # stop x 
         # stop mcsd
         # stop archive
@@ -140,6 +138,7 @@ refresh_dashboard() {
   "$DIR/wait-for-wifi.sh" "$WIFI_TEST_IP"
 
   # Get image
+  log_info "Retrieving image"
   "$FETCH_DASHBOARD_CMD" "$DASH_PNG"
   fetch_status=$?
 
@@ -187,7 +186,7 @@ rtc_sleep() {
     # lipc-set-prop -i com.lab126.powerd rtcWakeup "$duration" # doesn't seem to work. see https://www.mobileread.com/forums/showpost.php?p=3221077&postcount=7
 
     if [ $duration -lt 5 ]; then
-        duration=60
+      duration=60
     fi
     
     rtcwake -d /dev/rtc1 -m mem -s $duration >/dev/null

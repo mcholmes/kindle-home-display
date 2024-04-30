@@ -77,4 +77,4 @@ print-logs:
 copy-logs:
 	scp $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log .
 
-.PHONY: clean watch tarball format ssh push get-logs
+.PHONY: clean watch tarball format ssh push print-logs

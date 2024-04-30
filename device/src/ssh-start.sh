@@ -6,3 +6,5 @@
 cd /mnt/us/koreader && ./dropbear -E -R -p3333 -P /tmp/dropbear_mike.pid
 iptables -A INPUT -p tcp --dport 3333 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 3333 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+lipc-set-prop com.lab126.powerd preventScreenSaver 1

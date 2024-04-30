@@ -59,13 +59,14 @@ case $DEVICE_TYPE in
 esac
 
 optimise_power() {
-  log_info "Optimising power usage."
+  log_info "Optimising power usage..."
   
   echo powersave >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor # put CPU into low-power mode
   echo -n 0 > $BACKLIGHT # disable light. min=0, max=3280 (corresponding to 25 on the GUI slider)
   
   case $DEVICE_TYPE in
     "K4")
+        # Not tested!
         /etc/init.d/framework stop
         /etc/init.d/pmond stop
         /etc/init.d/phd stop
@@ -80,15 +81,14 @@ optimise_power() {
         # TODO: which of these need doing? what about framework & webreader?
         # TODO: use initctl stop instead of stop?
         
-        # The framework job sends a SIGTERM on stop, trap it so we don't get killed if we were launched by KUAL
+        # When framework is stopped, it sends a SIGTERM to everything it started.
+        # Trap so we don't get killed if we were launched by KUAL.
         # https://www.mobileread.com/forums/showpost.php?p=2639195&postcount=5
         trap "" SIGTERM
-        stop lab126_gui # main interface. #TODO: should this be framework instead?
+        stop framework # main interface. 
         usleep 1250000 # so we don't start before the blank screen
         trap - SIGTERM
-        
-        stop webreader
-        
+
         # OTA update related processes
         # https://www.mobileread.com/forums/showpost.php?p=2422385&postcount=6
         # https://www.mobileread.com/forums/showpost.php?p=2008593&postcount=13
@@ -96,8 +96,11 @@ optimise_power() {
         stop phd # phone home
         stop tmd # transfer manager
         stop todo
-
-        # # Don't know if I should stop these...
+        
+        # Other stuff
+        stop webreader # browser
+        
+        # TODO: Don't know which if any I should stop of these:
         # stop x 
         # stop mcsd
         # stop archive
@@ -105,6 +108,8 @@ optimise_power() {
         # stop dpmd 
         # stop appmgrd # application manager
         # stop stackdumpd
+
+        
         ;;
     *)
         echo "Unrecognised device $DEVICE_TYPE. Must be K4, PW2 or PW3."
@@ -132,6 +137,7 @@ display_sleep_screen() {
 refresh_dashboard() {
 
   # Re-enable wifi
+  log_info "Enabling wifi"
   lipc-set-prop com.lab126.cmd wirelessEnable 1
   "$DIR/wait-for-wifi.sh" "$WIFI_TEST_IP"
 
@@ -158,6 +164,7 @@ refresh_dashboard() {
   num_refresh=$((num_refresh + 1))
 
   # Disable wifi
+  log_info "Disabling wifi"
   lipc-set-prop com.lab126.cmd wirelessEnable 0
 }
 
@@ -185,19 +192,11 @@ rtc_sleep() {
         duration=60
     fi
     
-    rtcwake -d /dev/rtc1 -m mem -s $duration
+    rtcwake -d /dev/rtc1 -m mem -s $duration >/dev/null
     
     # echo -n "$duration" >"$RTC"
     # echo "mem" >/sys/power/state # suspend to RAM
 
-    # content=$(cat "$RTC")  # Read the content of the file
-    # if [ -z "$content" ] || [ "$content" -eq 0 ]; then  # Check if content is empty or zero
-    #   echo -n "$duration" >"$RTC"
-    #   echo "mem" >/sys/power/state
-    # else
-    #   log_error "Couldn't use RTC; it contained $content."
-    #   exit 1
-    # fi
   fi  
 }
 
@@ -236,13 +235,6 @@ if [ $# -eq 0 ]; then
 
   lipc-set-prop com.lab126.powerd preventScreenSaver 1
   if [ "$DEBUG" = false ]; then
-
-      # Check RTC file exists
-    if [ ! -e "$RTC" ]; then
-      echo "Can't find the wake alarm at $RTC."
-      exit 1
-    fi
-    
     optimise_power
   fi 
 

@@ -6,3 +6,5 @@ cat /tmp/dropbear_mike.pid | xargs kill
 rm /tmp/dropbear_mike.pid
 iptables -D INPUT -p tcp --dport 3333 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -D OUTPUT -p tcp --sport 3333 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+lipc-set-prop com.lab126.powerd preventScreenSaver 0

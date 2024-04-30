@@ -128,7 +128,8 @@ optimise_power() {
 display_sleep_screen() {
   log_info "Preparing sleep"
 
-  /usr/sbin/eips -f -g "$DIR/sleeping.png"
+  # /usr/sbin/eips -f -g "$DIR/sleeping.png"
+  /usr/sbin/eips "Paused. Schedule: $REFRESH_SCHEDULE"
 
   # Give screen time to refresh
   sleep 2
@@ -139,11 +140,6 @@ display_sleep_screen() {
 
 refresh_dashboard() {
 
-  # Re-enable wifi
-  log_info "Enabling wifi"
-  lipc-set-prop com.lab126.cmd wirelessEnable 1
-  "$DIR/wait-for-wifi.sh" "$WIFI_TEST_IP"
-
   # Get image
   log_info "Retrieving image"
   "$FETCH_DASHBOARD_CMD" "$DASH_PNG"
@@ -151,6 +147,7 @@ refresh_dashboard() {
 
   if [ "$fetch_status" -ne 0 ]; then
     log_error "Not updating screen, fetch-dashboard returned $fetch_status"
+    /usr/sbin/eips -c  
     /usr/sbin/eips "Error retrieving dashboard!"
     return 1
   fi
@@ -166,10 +163,6 @@ refresh_dashboard() {
   fi
 
   num_refresh=$((num_refresh + 1))
-
-  # Disable wifi
-  log_info "Disabling wifi"
-  lipc-set-prop com.lab126.cmd wirelessEnable 0
 }
 
 log_battery_stats() {
@@ -208,6 +201,11 @@ main_loop() {
   while true; do
     log_battery_stats
 
+    # Enable wifi
+    log_info "Enabling wifi"
+    lipc-set-prop com.lab126.cmd wirelessEnable 1
+    "$DIR/wait-for-wifi.sh" "$WIFI_TEST_IP"
+
     next_wakeup_secs=$("$DIR/next-wakeup" --schedule="$REFRESH_SCHEDULE" --timezone="$TIMEZONE")
 
     if [ "$next_wakeup_secs" -gt "$SLEEP_SCREEN_INTERVAL" ]; then
@@ -218,7 +216,11 @@ main_loop() {
       refresh_dashboard
     fi
 
-    # take a bit of time before going to sleep, so this process can be aborted
+    # Disable wifi
+    log_info "Disabling wifi"
+    lipc-set-prop com.lab126.cmd wirelessEnable 0
+
+    # Take a bit of time before suspending, so this process can be aborted
     sleep 10
 
     log_info "Going to $action, next wakeup in ${next_wakeup_secs}s"

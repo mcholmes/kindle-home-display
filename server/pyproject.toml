@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "server"
+dynamic = ["version"]
+description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
+readme = "README.md"
+requires-python = ">=3.9" # default on Raspberry Pi
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Mike Holmes", email = "michael@mcholmes.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+dependencies = [
+  "tzdata", # fallback in case OS doesn't have IANA timezone data
+  "pydantic",
+  "pillow",
+  "gcsa",
+  "requests",
+  "toml",
+  "fastapi",
+  "uvicorn[standard]",
+  "typer"
+]
+
+[project.urls]
+Documentation = "https://github.com/unknown/server#readme"
+Issues = "https://github.com/unknown/server/issues"
+Source = "https://github.com/unknown/server"
+
+[project.scripts]
+server = "server.cli:cli"
+
+[tool.hatch.version]
+path = "src/server/__about__.py"
+
+[tool.coverage.run]
+source_pkgs = ["server", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/server/__about__.py",
+]
+
+[tool.coverage.paths]
+server = ["src/server", "*/server/src/server"]
+tests = ["tests", "*/server/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+follow_imports = "normal"
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+warn_no_return = false
+warn_unused_ignores = true
+
+[tool.ruff]
+extend = "ruff_defaults.toml"
+
+[tool.ruff.lint]
+# extend-select = ["PTH"] TODO: refactor code to use Paths rather than strings
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runtime types

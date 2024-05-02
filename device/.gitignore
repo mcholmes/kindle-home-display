@@ -1,0 +1,5 @@
+# Device files
+/dist
+/kindle-dash-*.tgz
+/tmp
+/logs

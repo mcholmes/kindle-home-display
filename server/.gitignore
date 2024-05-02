@@ -1,6 +1,14 @@
 # Mac files
 *.DS_STORE
 
+# Google calendar credentials
+credentials*.json
+token.pickle
+api_keys.json
+
+# Ruff (from Hatch)
+.ruff_cache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

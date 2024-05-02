@@ -1,0 +1,35 @@
+[envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+  "mypy>=1.0.0"
+]
+
+[envs.default.scripts]
+server = "python -m server {args}"
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+types = "mypy --install-types --non-interactive {args:src/server tests}"
+
+[envs.py39]
+template = "default"
+python = "3.9"
+
+[[envs.all.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12"]
+
+[build]
+exclude = [
+  "/tests"
+]
+
+[envs.hatch-static-analysis]
+config-path = "ruff_defaults.toml"

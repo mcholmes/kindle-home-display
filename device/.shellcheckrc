@@ -1,0 +1,8 @@
+shell=busybox
+
+# Enable "local" variable definitions in functions
+disable=SC3043
+
+external-sources=true
+source=logging.sh
+source-path=SCRIPTDIR

@@ -8,9 +8,9 @@ from os import listdir, path
 from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, PrivateAttr
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, PositiveFloat, PrivateAttr
 
-from server.event import Event
+from server.activity import Activity
 
 """
 TODO:
@@ -134,20 +134,27 @@ class Renderer(BaseModel):
             "weather": "weathericons-regular-webfont.ttf",
         },
     )
+
+    activity_line_spacing: PositiveFloat = Field(
+        default=1.1,
+        description="Multiple of height to space apart bullet points.")
+
+    bullet_formats: str = Field(
+        default={"event": "•", "task": ">"},
+        description="Bullet point markers. Can be an empty string."
+    )
+
     margin_x: NonNegativeInt = Field(default=0, description="Left and right margins")
     margin_y: NonNegativeInt = Field(default=0, description="Top and bottom margins")
     top_row_y: NonNegativeInt = Field(
         default=0, description="Pixels from the top to place the date & weather"
     )
     space_between_sections: NonNegativeInt = Field(
-        default=0, description="Vertical pixels between header, today, and tomorrow"
+        default=50, description="Vertical pixels between header, today, and tomorrow"
     )
     rotate_angle: int = Field(
         default=0,
         description="Angle in degrees to rotate the image after rendering. Useful for multiple-column layouts?",
-    )
-    bullet_format: int = Field(
-        default="•", description="Default for bullet point marker"
     )
 
     # Private fields computed post-init
@@ -177,37 +184,43 @@ class Renderer(BaseModel):
 
         return text[: left - 1] + "..."
 
-    def render_activity(self, position: tuple[int], activity_text: str, font: Font):
-        text = f"{self.bullet_format} {activity_text}"
-        truncated_text = self.truncate_with_ellipsis(
-            text=text, max_width=self.image_width - 2 * self.margin_x, font=font
-        )
-        font.write(position, truncated_text)
-
-    def render_activity_with_prefix(
-        self, position: tuple[int], prefix: str, activity_text: str, font: Font
+    def render_single_activity(
+        self, position: tuple[int], activity_text: str, bullet: str, font: Font, prefix: Optional[str] = None
     ):
-        x, y = position
+        """
+        Writes a bullet-point, some grey text (prefix), then some black text (activity_text).
+        The black text is truncated with ... if it extends past the right-hand margin.
+        """
+        x_0, y = position
 
-        bullet = self.bullet_format + " "
-        prefix = prefix + " "
+        # Write the bullet
+        if len(bullet) > 0:
+            bullet = bullet + " "
+            font.write((x_0, y), bullet)
 
-        width_prefix = font.width(prefix)
-        width_bullet = font.width(bullet)
+            width_bullet = font.width(bullet)
+        else:
+            width_bullet = 0 # needed to know where to start writing the prefix
 
-        x_prefix = x + width_bullet
+        # Write the prefix text
+        x_prefix = x_0 + width_bullet
+        if prefix is not None and len(prefix) > 0:
+            prefix = prefix + " "
+            font.write((x_prefix, y), prefix, colour="gray")
+
+            width_prefix = font.width(prefix)
+        else:
+            width_prefix = 0
+
+        # Write the main text
         x_activity_text = x_prefix + width_prefix
-
-        font.write((x, y), bullet)
-        font.write((x_prefix, y), prefix, colour="gray")
-
         max_width = self.image_width - (self.margin_x + x_activity_text)
         activity_text_truncated = self.truncate_with_ellipsis(
             text=activity_text, max_width=max_width, font=font
         )
         font.write((x_activity_text, y), activity_text_truncated)
 
-    def render_events(self, section_title: str, events: list[Event], y: int):
+    def render_activities(self, section_title: str, events: list[Activity], y: int) -> int:
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
 
         event_title = self._ff.get("light")
@@ -235,41 +248,48 @@ class Renderer(BaseModel):
         y += event_title.height()  # Add spacing after the title
 
         # Bullets
-        bullet_height = event_regular.height()
+        line_height = event_regular.height()
 
         if len(events) == 0:
-            # dummy draw. Can customise message if useful
+            # Can show a message if nothing to display
+            text_nothing = ""
             event_nothing.write(
-                (self.image_width / 2, y), "", colour="gray", anchor="ma"
+                (self.image_width / 2, y), text_nothing, colour="gray", anchor="ma"
             )
-            y += bullet_height + 5
+            y += line_height + 5
             return y
 
-        for index, event in enumerate(events):
+        for index, activity in enumerate(events):
             # Stop rendering events if we're past the bottom margin
             if y > self.image_height - self.margin_y:
                 remaining = len(events) - index
                 event_regular.write((self.margin_x, y), f"     + {remaining} more...")
                 break
 
-            text = event.summary
-            time = event.time_start_short
+            text = activity.summary
+            time = activity.time_start_short
+            bullet = self.bullet_formats[activity.activity_type]
+
             position = (self.margin_x, y)
             if time is None:
-                self.render_activity(
-                    position=position, activity_text=text, font=event_regular
+                self.render_single_activity(
+                    position=position,
+                    activity_text=text,
+                    bullet=bullet,
+                    font=event_regular
                 )
             else:
-                self.render_activity_with_prefix(
+                self.render_single_activity(
                     position=position,
                     prefix=time,
                     activity_text=text,
-                    font=event_regular,
+                    bullet=bullet,
+                    font=event_regular
                 )
 
-            y += bullet_height + 5  # Add spacing between bullet points
+            y += (line_height*self.activity_line_spacing) + 5  # Add spacing between bullet points
 
-        return y
+        return y + self.space_between_sections
 
     def render_date(self, day: str, day_of_week: str, month: str):
         date_num = self._ff.get("bold", 200)
@@ -328,8 +348,8 @@ class Renderer(BaseModel):
         self,
         todays_date: datetime,
         weather,
-        events_today: list[Event],
-        events_tomorrow: list[Event],
+        events_today: list[Activity],
+        events_tomorrow: list[Activity],
     ) -> None:
         # Render top row
         day = todays_date.strftime("%-d")
@@ -339,15 +359,10 @@ class Renderer(BaseModel):
         self.render_date(day, day_of_week, month)
         # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 
-        # Render the "Today" section
-        y = (
-            self.top_row_y + 2 * self.space_between_sections
-        )  # TODO: return this from render_top_row
-        y = self.render_events("Today", events_today, y)
-
-        # Render the "Tomorrow" section
-        y += self.space_between_sections
-        self.render_events("Tomorrow", events_tomorrow, y)
+        # TODO: return y0 from render_top_row
+        y0 = self.top_row_y + self.space_between_sections
+        y1 = self.render_activities("Today", events_today, y0)
+        y2 = self.render_activities("Tomorrow", events_tomorrow, y1)
 
         self.render_last_updated(time)
 

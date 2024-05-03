@@ -41,20 +41,23 @@ class CalendarConfig(BaseModel):
         description="Path to credentials file. Intended for Google Calendar"
     )
 
+class TasksConfig(BaseModel):
+    project_id: int
 
 class WeatherConfig(BaseModel):
     latitude: float
     longitude: float
-
 
 class AppConfig(BaseModel):
     server: ServerConfig
     image: ImageConfig
     calendar: CalendarConfig
     weather: Optional[WeatherConfig] = None
+    tasks: Optional[TasksConfig] = None
 
     @classmethod
     def from_toml(cls, file_path: str):
         with open(file_path) as f:
             config_dict = toml.load(f)
         return cls(**config_dict)
+

@@ -1,3 +1,4 @@
+import json
 from os import getcwd
 from pathlib import Path
 from types import SimpleNamespace
@@ -37,21 +38,29 @@ def setup(
     """
     if config is None:
         config = Path(getcwd()) / "config.toml"
+        api_keys = Path(getcwd()) / "api_keys.json"
 
     if not config.exists():
         err = "No config.toml found."
         raise FileNotFoundError(err)
 
+    if not api_keys.exists():
+        err = "No api_keys.json found."
+        raise FileNotFoundError(err)
+
     app_config = AppConfig.from_toml(config)
-    _app = App(config=app_config)
+
+    with open("api_keys.json") as f:
+        api_keys = json.load(f)
+
+    _app = App(app_config, api_keys)
     _app.configure_logging(log_level, log_to_console)
 
     ctx.obj = SimpleNamespace(app=_app)
 
 @cli.command()
 def logs(
-    ctx: typer.Context,
-    # limit: Annotated[int, typer.Option(help="Limit the number of log lines to retrieve (newest first)")] = None,
+    ctx: typer.Context
 ):
     app: App = ctx.obj.app
     logs = app.get_server_logs()

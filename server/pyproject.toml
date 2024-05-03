@@ -33,7 +33,8 @@ dependencies = [
   "toml",
   "fastapi",
   "uvicorn[standard]",
-  "typer"
+  "typer",
+  "todoist-api-python"
 ]
 
 [project.urls]

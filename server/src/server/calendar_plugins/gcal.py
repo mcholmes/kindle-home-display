@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from server.event import Event
+from server.activity import Activity
 
 logger = logging.getLogger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARN)
@@ -137,7 +137,7 @@ class GCal:
         calendar_id: Optional[str] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
-    ) -> list[Event]:
+    ) -> list[Activity]:
         """
         Queries a given calendar API and converts responses into Event class.
         Defaults to primary if no calendar specified.
@@ -158,7 +158,8 @@ class GCal:
             )
 
         return [
-            Event.from_datetimes(
+            Activity.from_datetimes(
+                activity_type="event",
                 summary=e.summary,
                 dt_start=e.start,
                 dt_end=e.end,
@@ -174,7 +175,7 @@ class GCal:
         date_to: datetime,
         additional_calendars: Optional[Union[str, list]] = None,
         exclude_default_calendar: bool = False,
-    ) -> list[Event]:
+    ) -> list[Activity]:
         min_time_str = date_from.isoformat()
         max_time_str = date_to.isoformat()
 

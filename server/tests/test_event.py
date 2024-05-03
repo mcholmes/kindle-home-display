@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from server.event import Event
+from server.activity import Activity
 
 DT_START = datetime(2024,1,1).date()
 DT_END = datetime(2024,1,2).date()
@@ -13,7 +13,8 @@ SUMMARY = "blah"
 class TestStartDateIsDate:
 
     def test_start_only(self):
-        e = Event.from_datetimes(
+        e = Activity.from_datetimes(
+            activity_type="event",
             summary=SUMMARY,
             dt_start=DT_START
             )

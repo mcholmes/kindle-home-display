@@ -1,18 +1,19 @@
+from collections import defaultdict
 from datetime import date, datetime, time, timedelta
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
 
-class Event(BaseModel):
+class Activity(BaseModel):
     """
-    Data exchange format for calendar events.
+    Data exchange format for tasks & calendar events (or anything else that has a date).
     TODO: validate that
         - given time_end not None, then time_start not None
         - given date_end not None, date_start < date_end
         - date_start < today
     """
-
+    activity_type: Literal['event', 'task']
     summary: str
     date_start: date
     date_end: Optional[date] = Field(default=None)  # if none then it's all-day. if > start_date, then multi-day
@@ -24,6 +25,7 @@ class Event(BaseModel):
     @classmethod
     def from_datetimes(
         cls,
+        activity_type: str,
         summary: str,
         dt_start: datetime,
         dt_end: Optional[datetime] = None,
@@ -31,6 +33,7 @@ class Event(BaseModel):
         location: Optional[str] = None,
     ):
         return cls(
+            activity_type=activity_type,
             date_start=cls.datetime_to_date(dt_start),
             date_end=cls.datetime_to_date(dt_end),
             time_start=cls.datetime_to_time(dt_start),
@@ -130,3 +133,21 @@ class Event(BaseModel):
         else:
             datetime_str = f"{dt_object.hour!s}{datetime_str}am"
         return datetime_str
+
+
+def group_events_by_relative_day(events: list[Activity], current_date: datetime) -> dict[list[Activity]]:
+        """
+        :return: a dict of (lists of events for a day). key=0 is today, key=1 is tomorrow, etc.
+
+        Events within a day are unsorted.
+        """
+
+        # Group events by date
+        grouped_events = defaultdict(list)
+        for event in events:
+            # max(x, 0) caters for multi-day events starting before current date.
+            relative_day = max(event.get_relative_days_start(current_date), 0)
+            grouped_events[relative_day].append(event)
+
+        # Now we have all keys, so convert defaultdict to regular dictionary
+        return dict(grouped_events)

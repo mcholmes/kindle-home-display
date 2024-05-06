@@ -147,7 +147,6 @@ refresh_dashboard() {
 
   if [ "$fetch_status" -ne 0 ]; then
     log_error "Not updating screen, fetch-dashboard returned $fetch_status"
-    /usr/sbin/eips -c  
     /usr/sbin/eips "Error retrieving dashboard!"
     return 1
   fi

@@ -5,8 +5,6 @@ from types import SimpleNamespace
 from typing import Annotated, Optional
 
 import typer
-import uvicorn
-from fastapi import FastAPI
 
 from server.app import App
 from server.config import AppConfig
@@ -73,7 +71,10 @@ def once(ctx: typer.Context):
 
 @cli.command()
 def start(ctx: typer.Context):
+    import uvicorn
+    from fastapi import FastAPI
     app: App = ctx.obj.app
+
     f = FastAPI()
     f.include_router(app.router)
 

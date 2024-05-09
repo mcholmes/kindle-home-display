@@ -44,11 +44,6 @@ class App:
             methods=["GET"],
         )
 
-        # TODO: send a signal to device to break out of its check loop
-        # self.router.add_api_route("/break/check", endpoint=self.check_break, methods=["GET"])
-        # self.router.add_api_route("/break/set_true", endpoint=self.set_break_true, methods=["GET"])
-        # self.router.add_api_route("/break/set_false", endpoint=self.set_break_false, methods=["GET"])
-
         self.router.add_api_route(
             "/logs/server",
             response_class=PlainTextResponse,
@@ -65,11 +60,6 @@ class App:
 
     def root(self) -> str:
         return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
-
-    def check_break(self) -> bool:
-        """
-        For device to check if it should break from its infinite loop.
-        """
 
     def configure_logging(self, log_level: str, log_to_console: bool = False):
         """Reconfigure the ROOT logger, not the module's logger"""

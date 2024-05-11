@@ -1,14 +1,14 @@
 import io
 import logging
-import pathlib
 
 # if TYPE_CHECKING:
 from datetime import datetime
-from os import listdir, path
+from os import listdir
+from pathlib import Path
 from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt, PositiveFloat, PrivateAttr
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
 
 from server.activity import Activity
 
@@ -18,7 +18,7 @@ TODO:
 """
 
 logger = logging.getLogger(__name__)
-script_dir = path.dirname(path.abspath(__file__))
+script_dir: Path = Path.parent(Path.resolve(__file__))
 
 
 class Font:
@@ -66,14 +66,14 @@ class FontFactory:
     def __init__(
         self,
         draw: ImageDraw,
-        font_dir: Optional[str] = None,
+        font_dir: Optional[Path] = None,
         font_map: Optional[dict[str]] = None,
     ):
         self.default_size = 48
 
         if font_dir is None:
-            current_path = str(pathlib.Path(__file__).parent.absolute())
-            self.font_dir = path.join(current_path, "font")
+            current_path = Path(__file__).parent.absolute()
+            self.font_dir = current_path / "font"
         else:
             self.font_dir = font_dir
 
@@ -104,7 +104,7 @@ class FontFactory:
             err = f"Font name not in defined list. Valid values are: {self.font_map.values()}"
             raise ValueError(err)
 
-        font_file = path.join(self.font_dir, self.font_map[name])
+        font_file = self.font_dir / self.font_map[name]
 
         return Font(self.draw, font_file, size)
 
@@ -120,7 +120,7 @@ class Renderer(BaseModel):
     # Optional fields
     background_colour: str = Field(default="white")
     fonts_file_dir: str = Field(
-        default=path.join(script_dir, "font"),
+        default = script_dir / "font",
         description="Path to directory containing .ttf fonts",
     )
     font_style_map: dict[str, str] = Field(

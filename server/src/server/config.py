@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 import toml
@@ -56,8 +57,8 @@ class AppConfig(BaseModel):
     tasks: Optional[TasksConfig] = None
 
     @classmethod
-    def from_toml(cls, file_path: str):
-        with open(file_path) as f:
+    def from_toml(cls, file_path: Path):
+        with Path.open(file_path) as f:
             config_dict = toml.load(f)
         return cls(**config_dict)
 

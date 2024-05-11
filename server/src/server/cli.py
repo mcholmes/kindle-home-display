@@ -1,5 +1,4 @@
 import json
-from os import getcwd
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Optional
@@ -35,8 +34,9 @@ def setup(
     in the directory from which this script is being run.
     """
     if config is None:
-        config = Path(getcwd()) / "config.toml"
-        api_keys = Path(getcwd()) / "api_keys.json"
+        current_dir = Path.cwd()
+        config = current_dir / "config.toml"
+        api_keys = current_dir / "api_keys.json"
 
     if not config.exists():
         err = "No config.toml found."
@@ -48,7 +48,7 @@ def setup(
 
     app_config = AppConfig.from_toml(config)
 
-    with open("api_keys.json") as f:
+    with Path.open(api_keys) as f:
         api_keys = json.load(f)
 
     _app = App(app_config, api_keys)

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -6,6 +7,7 @@ from todoist_api_python.models import Due
 
 from server.activity import Activity
 
+logger = logging.getLogger(__name__)
 
 def get_tasks_todoist(api_key: str, project_id: int, date_end: datetime) -> list[Activity]:
 
@@ -13,8 +15,20 @@ def get_tasks_todoist(api_key: str, project_id: int, date_end: datetime) -> list
 
     api = TodoistAPI(api_key)
 
-    collaborators = api.get_collaborators(project_id=project_id)
-    tasks = api.get_tasks(project_id=project_id, is_completed=False)
+    logger.debug("Querying Todoist.")
+    logger.debug("Getting collaborators...")
+    try:
+        collaborators = api.get_collaborators(project_id=project_id)
+    except Exception:
+        logger.exception("Failed to get collaborators.")
+        raise
+
+    logger.debug("Getting tasks...")
+    try:
+        tasks = api.get_tasks(project_id=project_id, is_completed=False)
+    except Exception:
+        logger.exception("Failed to get tasks.")
+        raise
 
     def include_task(due: Optional[Due]) -> bool:
         return due is not None and datetime.fromisoformat(due.date).replace(tzinfo=tz) <= date_end
@@ -25,6 +39,7 @@ def get_tasks_todoist(api_key: str, project_id: int, date_end: datetime) -> list
 
     my_tasks: list[Activity] = []
 
+    logger.debug("Constructing activity list from tasks...")
     for task in tasks_due:
         # task_id = task.id
         # priority = task.priority
@@ -40,5 +55,8 @@ def get_tasks_todoist(api_key: str, project_id: int, date_end: datetime) -> list
             description=desc
         )
         my_tasks.append(e)
+
+    log_msg = f"Built a list of {len(my_tasks)} tasks."
+    logger.debug(log_msg)
 
     return my_tasks

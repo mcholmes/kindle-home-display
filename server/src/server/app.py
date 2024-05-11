@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, time, timedelta
-from os import mkdir, path
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
@@ -31,11 +31,7 @@ class App:
         self.config = config
         self.api_keys = api_keys
 
-        self.router.add_api_route(
-            "/",
-            response_class=HTMLResponse,
-            endpoint=self.root,
-            methods=["GET"])
+        self.router.add_api_route("/", response_class=HTMLResponse, endpoint=self.root, methods=["GET"])
 
         self.router.add_api_route(
             "/dashboard",
@@ -56,6 +52,7 @@ class App:
             endpoint=self.get_device_logs,
             methods=["GET"],
         )
+        logger.debug("Started server.")
         # TODO: add a POST for device to send its logs back to server
 
     def root(self) -> str:
@@ -76,23 +73,23 @@ class App:
             console_handler.setFormatter(h_format)
             root_logger.addHandler(console_handler)
 
-        log_dir = self.config.server.server_dir
-        log_path = path.join(log_dir, self.server_log_file_name)
-        if not path.exists(log_dir):
+        log_dir = Path(self.config.server.server_dir)
+        log_path = log_dir / self.server_log_file_name
+        if not Path.exists(log_dir):
             print(f"Creating new log directory: {log_dir}")  # noqa: T201
-            mkdir(log_dir)
+            Path.mkdir(log_dir)
 
         file_handler = logging.FileHandler(log_path)
         file_handler.setFormatter(h_format)
         root_logger.addHandler(file_handler)
 
     def get_logs(self, file_name) -> str:
-        log_path = path.join(self.config.server.server_dir, file_name)
-        if path.exists(log_path):
-            with open(log_path) as f:
+        logs = Path(self.config.server.server_dir) / file_name
+        try:
+            with Path.open(logs) as f:
                 output = f.read()
-        else:
-            return "No log file found"
+        except FileNotFoundError:
+            output = f"No log file found at {logs}."
 
         return output
 
@@ -105,11 +102,9 @@ class App:
     def generate_image_and_save(self) -> None:
         events, current_date = self.get_dashboard_data()
         image = self.generate_image(events, current_date)
-        output_filepath = path.join(
-            self.config.server.server_dir, self.image_file_name
-        )
+        output_filepath = Path(self.config.server.server_dir) / self.image_file_name
 
-        with open(output_filepath, "wb") as f:
+        with Path.open(output_filepath, "wb") as f:
             f.write(image)
 
     def get_dashboard_response(self) -> Response:
@@ -123,7 +118,10 @@ class App:
         display_timezone = ZoneInfo(self.config.calendar.display_timezone)
         current_date = datetime.now(display_timezone)
 
-        tasks = self.get_tasks(current_date) # TODO: make this optional
+        logger.debug("Getting tasks...")
+        tasks = self.get_tasks(current_date)  # TODO: make this optional depending on config.toml
+
+        logger.debug("Getting calendar appointments...")
         appointments = self.get_appointments(current_date)
 
         events_unsorted = tasks + appointments
@@ -140,7 +138,6 @@ class App:
         return events, current_date
 
     def generate_image(self, events: dict[list[Activity]], current_date: datetime) -> bytes:
-
         events_today = sort_by_time(events.get(0, []))
         events_tomorrow = sort_by_time(events.get(1, []))
 
@@ -169,13 +166,9 @@ class App:
         config = self.config.tasks
 
         project_id = config.project_id
-
         date_end = current_date + timedelta(days=self.config.calendar.days_to_show)
-        return get_tasks_todoist(
-            api_key=self.api_keys["todoist"],
-            project_id=project_id,
-            date_end=date_end
-            )
+
+        return get_tasks_todoist(api_key=self.api_keys["todoist"], project_id=project_id, date_end=date_end)
 
     def get_appointments(self, current_date: datetime) -> list[Activity]:
         config = self.config.calendar

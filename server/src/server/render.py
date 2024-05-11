@@ -18,8 +18,8 @@ TODO:
 """
 
 logger = logging.getLogger(__name__)
-script_dir: Path = Path.parent(Path.resolve(__file__))
 
+script_dir = Path(__file__).resolve().parent
 
 class Font:
     """

@@ -3,16 +3,16 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated, Optional
 
-import typer
+from typer import Context, Option, Typer
 
 from server.app import App
 from server.config import AppConfig
 
-cli = typer.Typer(add_completion=False)
+cli = Typer(add_completion=False)
 
 config_type = Annotated[
     Path,
-    typer.Option(
+    Option(
         exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True
     ),
 ]
@@ -21,10 +21,10 @@ config_type = Annotated[
 # https://jacobian.org/til/common-arguments-with-typer/
 @cli.callback()
 def setup(
-    ctx: typer.Context,
+    ctx: Context,
     config: Optional[config_type] = None,
-    log_level: Annotated[str, typer.Option(help="Logging level")] = "INFO",
-    log_to_console: Annotated[bool, typer.Option(help="Print logging to console (as well as file)")] = False,  # noqa: FBT002
+    log_level: Annotated[str, Option(help="Logging level")] = "INFO",
+    log_to_console: Annotated[bool, Option(help="Print logging to console (as well as file)")] = False,  # noqa: FBT002
 ):
     """
     Command-line interface for an app which creates & serves an image to be polled by
@@ -58,19 +58,19 @@ def setup(
 
 @cli.command()
 def logs(
-    ctx: typer.Context
+    ctx: Context
 ):
     app: App = ctx.obj.app
     logs = app.get_server_logs()
     print(logs)  # noqa: T201
 
 @cli.command()
-def once(ctx: typer.Context):
+def once(ctx: Context):
     app: App = ctx.obj.app
     app.generate_image_and_save()
 
 @cli.command()
-def start(ctx: typer.Context):
+def start(ctx: Context):
     import uvicorn
     from fastapi import FastAPI
     app: App = ctx.obj.app

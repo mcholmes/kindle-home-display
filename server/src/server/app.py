@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -118,11 +119,19 @@ class App:
         display_timezone = ZoneInfo(self.config.calendar.display_timezone)
         current_date = datetime.now(display_timezone)
 
-        logger.debug("Getting tasks...")
-        tasks = self.get_tasks(current_date)  # TODO: make this optional depending on config.toml
+        logger.debug("Getting data in parallel...")
 
-        logger.debug("Getting calendar appointments...")
-        appointments = self.get_appointments(current_date)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_tasks = executor.submit(
+                self.get_tasks, current_date
+            )  # TODO: make this optional depending on config.toml
+            future_appointments = executor.submit(self.get_appointments, current_date)
+
+            # Wait for both API calls to complete
+            wait([future_tasks, future_appointments])
+
+            tasks = future_tasks.result()
+            appointments = future_appointments.result()
 
         events_unsorted = tasks + appointments
 

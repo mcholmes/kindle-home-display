@@ -82,7 +82,7 @@ warn_unused_ignores = true
 extend = "ruff_defaults.toml"
 
 [tool.ruff.lint]
-extend-select = ["PTH"] # TODO: refactor code to use Paths rather than strings
+extend-select = ["PTH"]
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runtime types

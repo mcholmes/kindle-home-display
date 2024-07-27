@@ -29,6 +29,10 @@ def setup(
     """
     Command-line interface for an app which creates & serves an image to be polled by
     dashboard device using wget or similar.
+
+    After pip installing the .whl, run this from the command line:
+    nohup server start > ~/uvicorn.log &1>2
+
     """
 
     config = AppConfig.from_dir(config_dir)

@@ -28,10 +28,10 @@ class Font:
     - Allows fonts to draw themselves, rather than passing around ImageFonts.
     """
 
-    def __init__(self, draw: ImageDraw, file: str, size: int):
+    def __init__(self, draw: ImageDraw, file: Path, size: int):
         self._draw = draw
 
-        f = ImageFont.truetype(file, size)
+        f = ImageFont.truetype(str(file), size)
         self._font = f
         self._height = f.getbbox("lq")[
             3

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, time, timedelta
+from pathlib import Path
 from typing import Union
 
 from pydantic import BaseModel, PositiveInt
@@ -16,7 +17,7 @@ class Calendar(BaseModel):
     The current calendar provider is Google Calendar, but this is pluggable.
     """
 
-    credentials: str
+    credentials: Union[Path, str]
     calendar_ids: Union[str, list[str]]
     current_date: datetime
     days_to_show: PositiveInt = 2

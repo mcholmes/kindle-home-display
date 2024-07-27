@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Union
 
 from gcsa.google_calendar import GoogleCalendar
@@ -23,7 +24,7 @@ class GCal:
     Manages connections to Google Calendar and facilitates extraction of events.
     """
 
-    def __init__(self, creds_path):
+    def __init__(self, creds_path: Path):
         # Uncomment if using general oauth flow ###
         # current_path = str(pathlib.Path(__file__).parent.absolute())
         # creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
@@ -34,19 +35,19 @@ class GCal:
         #     self.generate_oauth_token(creds_path=creds_path, token_path=token_path)
         # self.calendar = self.create_calendar_oauth(creds_path)
 
-        if not os.path.exists(creds_path):
+        if not Path.exists(creds_path):
             err = f"No credentials file found at {creds_path}"
-            raise ValueError(err)
+            raise FileNotFoundError(err)
 
         self.calendar = self.create_calendar_service_user(creds_path)
         self.available_calendars = self.get_available_calendars()
 
     @staticmethod
     def is_token_valid(token_path):
-        if not os.path.exists(token_path):
+        if not Path.exists(token_path):
             return False
 
-        with open(token_path, "rb") as token:
+        with Path.open(token_path, "rb") as token:
             creds = pickle.load(token)
 
         return creds.valid
@@ -65,8 +66,8 @@ class GCal:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists(token_path):
-            with open(token_path, "rb") as token:
+        if Path.exists(token_path):
+            with Path.open(token_path, "rb") as token:
                 creds = pickle.load(token)
 
         # If there are no (valid) credentials available, let the user log in.
@@ -77,7 +78,7 @@ class GCal:
                 flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open(token_path, "wb") as token:
+            with Path.open(token_path, "wb") as token:
                 pickle.dump(creds, token)
 
     def get_available_calendars(self):

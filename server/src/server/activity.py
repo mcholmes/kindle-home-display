@@ -16,11 +16,11 @@ class Activity(BaseModel):
     activity_type: Literal['event', 'task']
     summary: str
     date_start: date
-    date_end: Optional[date] = Field(default=None)  # if none then it's all-day. if > start_date, then multi-day
-    time_start: Optional[time] = Field(default=None)  # if none then it's all-day.
-    time_end: Optional[time] = Field(default=None)  # mandatory if start_time is populated
-    description: Optional[str] = Field(default=None)
-    location: Optional[str] = Field(default=None)
+    date_end: Optional[date] = None  # if none then all-day. if > start_date, then multi-day
+    time_start: Optional[time] = None  # if none then all-day. if populated without end time, then it's a point in time
+    time_end: Optional[time] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
 
     @classmethod
     def from_datetimes(
@@ -134,6 +134,8 @@ class Activity(BaseModel):
             datetime_str = f"{dt_object.hour!s}{datetime_str}am"
         return datetime_str
 
+def sort_by_time(events: list[Activity]):
+    return sorted(events, key=lambda x: x.time_start or time.min)
 
 def group_events_by_relative_day(events: list[Activity], current_date: datetime) -> dict[list[Activity]]:
         """

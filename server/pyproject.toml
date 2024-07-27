@@ -49,7 +49,7 @@ server = "server.cli:cli"
 path = "src/server/__about__.py"
 
 [tool.coverage.run]
-source_pkgs = ["server", "tests"]
+source_pkgs = ["server"] #, "tests"]
 branch = true
 parallel = true
 omit = [
@@ -58,9 +58,11 @@ omit = [
 
 [tool.coverage.paths]
 server = ["src/server", "*/server/src/server"]
-tests = ["tests", "*/server/tests"]
+# tests = ["tests", "*/server/tests"]
 
 [tool.coverage.report]
+skip_empty = true
+show_missing = true
 exclude_lines = [
   "no cov",
   "if __name__ == .__main__.:",

@@ -2,12 +2,13 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, time, timedelta
 from pathlib import Path
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
-from server.activity import Activity, group_events_by_relative_day
+from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.cal import Calendar
 from server.config import AppConfig
 from server.render import Renderer
@@ -15,74 +16,11 @@ from server.todoist import get_tasks_todoist
 
 logger = logging.getLogger(__name__)
 
-
-def sort_by_time(events: list[Activity]):
-    return sorted(events, key=lambda x: x.time_start or time.min)
-
-
 class App:
     config: AppConfig
-    api_keys: dict[str]
-    image_file_name: str = "dashboard.png"
-    server_log_file_name: str = "server.log"
-    device_log_file_name: str = "device.log"
-    router: APIRouter = APIRouter()
 
-    def __init__(self, config: AppConfig, api_keys: dict[str]):
+    def __init__(self, config: AppConfig):
         self.config = config
-        self.api_keys = api_keys
-
-        self.router.add_api_route("/", response_class=HTMLResponse, endpoint=self.root, methods=["GET"])
-
-        self.router.add_api_route(
-            "/dashboard",
-            response_class=Response,
-            endpoint=self.get_dashboard_response,
-            methods=["GET"],
-        )
-
-        self.router.add_api_route(
-            "/logs/server",
-            response_class=PlainTextResponse,
-            endpoint=self.get_server_logs,
-            methods=["GET"],
-        )
-        self.router.add_api_route(
-            "/logs/device",
-            response_class=PlainTextResponse,
-            endpoint=self.get_device_logs,
-            methods=["GET"],
-        )
-        logger.debug("Started server.")
-        # TODO: add a POST for device to send its logs back to server
-
-    def root(self) -> str:
-        return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
-
-    def configure_logging(self, log_level: str, log_to_console: bool = False):
-        """Reconfigure the ROOT logger, not the module's logger"""
-        root_logger = logging.getLogger()
-        root_logger.setLevel(log_level)
-
-        h_format = logging.Formatter(
-            fmt="%(asctime)s %(levelname)s %(name)s :: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-
-        if log_to_console:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(h_format)
-            root_logger.addHandler(console_handler)
-
-        log_dir = Path(self.config.server.server_dir)
-        log_path = log_dir / self.server_log_file_name
-        if not Path.exists(log_dir):
-            print(f"Creating new log directory: {log_dir}")  # noqa: T201
-            Path.mkdir(log_dir)
-
-        file_handler = logging.FileHandler(log_path)
-        file_handler.setFormatter(h_format)
-        root_logger.addHandler(file_handler)
 
     def get_logs(self, file_name) -> str:
         logs = Path(self.config.server.server_dir) / file_name
@@ -95,15 +33,16 @@ class App:
         return output
 
     def get_server_logs(self) -> str:
-        return self.get_logs(self.server_log_file_name)
+        return self.get_logs(self.config.server.server_log_file_name)
 
     def get_device_logs(self) -> str:
-        return self.get_logs(self.device_log_file_name)
+        # TODO: this is unused for now. Implement a way for the device to send logs back to the server
+        return self.get_logs(self.config.server.device_log_file_name)
 
     def generate_image_and_save(self) -> None:
         events, current_date = self.get_dashboard_data()
         image = self.generate_image(events, current_date)
-        output_filepath = Path(self.config.server.server_dir) / self.image_file_name
+        output_filepath = Path(self.config.server.server_dir) / self.config.server.image_name
 
         with Path.open(output_filepath, "wb") as f:
             f.write(image)
@@ -154,8 +93,8 @@ class App:
             image_width=self.config.image.width,
             image_height=self.config.image.height,
             rotate_angle=self.config.image.rotate_angle,
-            margin_x=100,
-            margin_y=200,
+            margin_x=self.config.image.margin_x,
+            margin_y=self.config.image.margin_x,
             top_row_y=250,
             space_between_sections=100,
         )
@@ -176,8 +115,7 @@ class App:
 
         project_id = config.project_id
         date_end = current_date + timedelta(days=self.config.calendar.days_to_show)
-
-        return get_tasks_todoist(api_key=self.api_keys["todoist"], project_id=project_id, date_end=date_end)
+        return get_tasks_todoist(api_key=self.config.api_keys["todoist"], project_id=project_id, date_end=date_end)
 
     def get_appointments(self, current_date: datetime) -> list[Activity]:
         config = self.config.calendar
@@ -205,3 +143,46 @@ class App:
         # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
         # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
         # # current_weather_temp=round(hourly_forecast[1]["temp"]),
+
+class AppServer(App):
+
+    router: APIRouter = APIRouter()
+
+    def __init__(self, config: AppConfig):
+        self.config = config
+        self.configure_routes()
+
+    def configure_routes(self):
+        self.router = APIRouter()
+        self.router.add_api_route(
+            "/",
+            response_class=HTMLResponse,
+            endpoint=self.root, methods=["GET"]
+            )
+
+        self.router.add_api_route(
+            "/dashboard",
+            response_class=Response,
+            endpoint=self.get_dashboard_response,
+            methods=["GET"],
+            )
+
+        self.router.add_api_route(
+            "/logs/server",
+            response_class=PlainTextResponse,
+            endpoint=self.get_server_logs,
+            methods=["GET"],
+            )
+
+        self.router.add_api_route(
+            "/logs/device",
+            response_class=PlainTextResponse,
+            endpoint=self.get_device_logs,
+            methods=["GET"],
+            )
+
+        logger.debug("Started server.")
+        # TODO: add a POST for device to send its logs back to server
+
+    def root(self) -> str:
+        return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."

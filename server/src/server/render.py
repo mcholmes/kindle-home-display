@@ -347,9 +347,9 @@ class Renderer(BaseModel):
     def render_all(
         self,
         todays_date: datetime,
-        weather,
         events_today: list[Activity],
         events_tomorrow: list[Activity],
+        weather = None
     ) -> None:
         # Render top row
         day = todays_date.strftime("%-d")
@@ -362,7 +362,7 @@ class Renderer(BaseModel):
         # TODO: return y0 from render_top_row
         y0 = self.top_row_y + self.space_between_sections
         y1 = self.render_activities("Today", events_today, y0)
-        y2 = self.render_activities("Tomorrow", events_tomorrow, y1)
+        self.render_activities("Tomorrow", events_tomorrow, y1)
 
         self.render_last_updated(time)
 

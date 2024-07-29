@@ -1,8 +1,7 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
@@ -101,7 +100,6 @@ class App:
 
         r.render_all(
             todays_date=current_date,
-            weather=None,
             events_today=events_today,
             events_tomorrow=events_tomorrow,
         )

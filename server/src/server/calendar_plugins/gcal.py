@@ -1,5 +1,4 @@
 import logging
-import os
 import pickle
 from datetime import datetime
 from pathlib import Path

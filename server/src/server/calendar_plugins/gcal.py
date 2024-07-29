@@ -47,7 +47,7 @@ class GCal:
             return False
 
         with Path.open(token_path, "rb") as token:
-            creds = pickle.load(token)
+            creds = pickle.load(token)  # noqa: S301
 
         return creds.valid
 
@@ -67,7 +67,7 @@ class GCal:
         # time.
         if Path.exists(token_path):
             with Path.open(token_path, "rb") as token:
-                creds = pickle.load(token)
+                creds = pickle.load(token)  # noqa: S301
 
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
@@ -174,7 +174,7 @@ class GCal:
         date_from: datetime,
         date_to: datetime,
         additional_calendars: Optional[Union[str, list]] = None,
-        exclude_default_calendar: bool = False,
+        exclude_default_calendar: bool = False,  # noqa: FBT001, FBT002
     ) -> list[Activity]:
         min_time_str = date_from.isoformat()
         max_time_str = date_to.isoformat()

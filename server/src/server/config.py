@@ -49,7 +49,7 @@ def find_file_in_dir(directory: Path, basename: str) -> Path:
 
 
 
-def get_required_fields(model: type[BaseModel], recursive: bool = False) -> Iterator[str]:
+def get_required_fields(model: type[BaseModel], recursive: bool = False) -> Iterator[str]:  # noqa: FBT001, FBT002
     for name, field in model.model_fields.items():
         if not field.is_required():
             continue

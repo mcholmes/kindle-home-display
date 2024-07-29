@@ -69,7 +69,7 @@ def start(ctx: Context):
 
     uvicorn.run(f, host=str(app.config.server.host), port=app.config.server.port)
 
-def configure_logging(filepath: Path, log_level: str, log_to_console: bool = False):
+def configure_logging(filepath: Path, log_level: str, log_to_console: bool = False):  # noqa: FBT002, FBT001
         """Reconfigure the ROOT logger, not the module's logger"""
         if filepath.is_dir():
              raise IsADirectoryError

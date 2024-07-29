@@ -119,5 +119,5 @@ def test_valid_extraneous_fields(valid_server_config, valid_image_config):
     assert config.image.height == 1448
 
 def test_invalid_missing_api_key():
-    ... # TODO
+    ... # TODO: implement this test
 

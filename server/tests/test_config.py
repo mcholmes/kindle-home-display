@@ -4,9 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from server.config import (
-    AppConfig,
-)
+from server.config import AppConfig, MultipleFilesFoundError, find_file_in_dir
 
 
 @pytest.fixture
@@ -121,3 +119,25 @@ def test_valid_extraneous_fields(valid_server_config, valid_image_config):
 def test_invalid_missing_api_key():
     ... # TODO: implement this test
 
+
+def test_no_matching_files(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        find_file_in_dir(tmp_path, "testfile.json")
+
+def test_one_matching_file(tmp_path):
+    f1 = tmp_path / "file1.json"
+    f2 = tmp_path / "file2.json"
+    f1.touch()
+    f2.touch()
+
+    result = find_file_in_dir(tmp_path, "file1")
+    assert result == tmp_path / "file1.json"
+
+def test_multiple_matching_files(tmp_path):
+    f1 = tmp_path / "file1.json"
+    f2 = tmp_path / "file1.yaml"
+    f1.touch()
+    f2.touch()
+
+    with pytest.raises(MultipleFilesFoundError):
+        find_file_in_dir(tmp_path, "file1")

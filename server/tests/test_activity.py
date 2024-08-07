@@ -204,33 +204,37 @@ def test_ends_today():
 
 def test_ended_over_an_hour_ago():
     now = datetime.now(tz=TZ)
+    now_minus_2_hours = now - timedelta(hours=2)
+    now_minus_30_minutes = now - timedelta(minutes=30)
+    now_plus_30_minutes = now + timedelta(minutes=30)
+    now_plus_2_hours = now + timedelta(hours=2)
 
     e1 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=now.date(),
-        time_start=(now - timedelta(hours=2)).time()
+        date_start=now_minus_2_hours.date(),
+        time_start=now_minus_2_hours.time()
     )
 
     e2 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=now.date(),
-        time_start=(now - timedelta(minutes=30)).time()
+        date_start=now_minus_30_minutes.date(),
+        time_start=now_minus_30_minutes.time()
     )
 
     e3 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=now.date(),
-        time_start=(now + timedelta(minutes=30)).time()
+        date_start=now_plus_30_minutes.date(),
+        time_start=now_plus_30_minutes.time()
     )
 
     e4 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=now.date(),
-        time_start=(now + timedelta(hours=2)).time()
+        date_start=now_plus_2_hours.date(),
+        time_start=now_plus_2_hours.time()
     )
 
     assert e1.ended_over_an_hour_ago

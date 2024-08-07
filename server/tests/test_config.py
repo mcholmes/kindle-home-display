@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from server.config import AppConfig, MultipleFilesFoundError, find_file_in_dir
+from server.config import AppConfig, MultipleFilesFoundError, find_file_in_dir, get_dict_from_file
 
 
 @pytest.fixture
@@ -141,3 +141,35 @@ def test_multiple_matching_files(tmp_path):
 
     with pytest.raises(MultipleFilesFoundError):
         find_file_in_dir(tmp_path, "file1")
+
+def test_get_dict_from_file_is_directory(tmp_path):
+    with pytest.raises(IsADirectoryError):
+        get_dict_from_file(tmp_path)
+
+def test_get_dict_from_file_bad_extension(tmp_path):
+    f = tmp_path / "file.txt"
+    f.touch()
+
+    with pytest.raises(TypeError):
+        get_dict_from_file(f)
+
+def test_get_dict_from_file_json(tmp_path):
+    f = tmp_path / "file.json"
+    f.write_text('{"key": "value"}')
+
+    result = get_dict_from_file(f)
+    assert result == {"key": "value"}
+
+def test_get_dict_from_file_yaml(tmp_path):
+    f = tmp_path / "file.yaml"
+    f.write_text("key: value")
+
+    result = get_dict_from_file(f)
+    assert result == {"key": "value"}
+
+def test_get_dict_from_file_toml(tmp_path):
+    f = tmp_path / "file.toml"
+    f.write_text("key = 'value'")
+
+    result = get_dict_from_file(f)
+    assert result == {"key": "value"}

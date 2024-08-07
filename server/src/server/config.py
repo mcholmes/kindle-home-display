@@ -94,7 +94,6 @@ def get_dict_from_file(file_path: Path) -> dict:
 
         return output
 
-# TODO: use this to print help to the CLI of what can be in the config file
 class ServerConfig(BaseModel):
     host: IPv4Address = Field(
         default="127.0.0.1",
@@ -135,7 +134,7 @@ class WeatherConfig(BaseModel):
     latitude: float
     longitude: float
 
-class AppConfig(BaseModel):
+class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a "config-helper" command
     server: ServerConfig
     image: ImageConfig
 

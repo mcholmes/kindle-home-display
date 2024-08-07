@@ -161,8 +161,8 @@ class GCal:
             Activity.from_datetimes(
                 activity_type="event",
                 summary=e.summary,
-                dt_start=e.start,
-                dt_end=e.end,
+                datetime_start=e.start,
+                datetime_end=e.end,
                 description=e.description,
                 location=e.location,
             )

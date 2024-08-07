@@ -72,8 +72,8 @@ class App:
             appointments = future_appointments.result()
 
         events_unsorted = tasks + appointments
-
-        events = group_events_by_relative_day(events=events_unsorted, current_date=current_date)
+        events_filtered = [event for event in events_unsorted if not event.ended_over_an_hour_ago]
+        events = group_events_by_relative_day(events=events_filtered, current_date=current_date)
 
         count_events = 0
         for day in events:

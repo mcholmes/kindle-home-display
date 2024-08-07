@@ -30,8 +30,8 @@ class Activity(BaseModel):
     @field_validator('date_end')
     def validate_date_end(cls, date_end, info: ValidationInfo):  # noqa: N805
         date_start = info.data.get('date_start')
-        if date_end is not None and date_start is not None and date_start >= date_end:
-            error_msg = "date_start must be earlier than date_end"
+        if date_end is not None and date_start is not None and date_start > date_end:
+            error_msg = "date_start must not be later than date_end"
             raise ValueError(error_msg)
         return date_end
 
@@ -136,10 +136,10 @@ def datetime_to_date(dt: Union[datetime, date]) -> date:
     err = "Input is not a datetime or date: {dt}"
     raise TypeError(err)
 
-def calculate_short_time(dt_object: datetime) -> str:
+def calculate_short_time(dt_object: Union[datetime, time]) -> str:
     if dt_object is None:
         return None
-    if not isinstance(dt_object, datetime):
+    if not isinstance(dt_object, (datetime, time)):
         err = f"Can't get short time from an object of type {type(dt_object)}"
         raise TypeError(err)
 

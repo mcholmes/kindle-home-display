@@ -59,7 +59,7 @@ class App:
 
         logger.debug("Getting data in parallel...")
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
+        with ThreadPoolExecutor() as executor:
             future_tasks = executor.submit(
                 self.get_tasks, current_date
             )  # TODO: make this optional depending on config.toml

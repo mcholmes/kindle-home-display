@@ -5,7 +5,14 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic import ValidationError
 
-from server.activity import Activity, calculate_short_time, datetime_to_date, datetime_to_time, sort_by_time
+from server.activity import (
+    Activity,
+    calculate_short_time,
+    datetime_to_date,
+    datetime_to_time,
+    group_events_by_relative_day,
+    sort_by_time,
+)
 
 TZ = ZoneInfo("Europe/London")
 SUMMARY = "event summary here"
@@ -53,6 +60,57 @@ def test_start_datetime_but_no_end(datetime_future):
     assert e.date_end is None
     assert e.time_end is None
 
+def test_time_start_short():
+    e = Activity.from_datetimes(
+        activity_type="event",
+        summary=SUMMARY,
+        datetime_start=datetime(1970,1,1,12,30),
+        datetime_end=datetime(1970,1,1,13,30),
+        )
+
+    assert e.time_start_short == "12.30pm"
+    assert e.time_end_short == "1.30pm"
+
+def test_get_relative_days_start(date_future):
+    e = Activity(
+        activity_type="event",
+        summary=SUMMARY,
+        date_start=date_future
+        )
+
+    d_minus_1 = date_future - timedelta(days=1)
+    d_plus_1 = date_future + timedelta(days=1)
+
+    assert e.get_relative_days_start(d_minus_1) == 1
+    assert e.get_relative_days_start(date_future) == 0
+    assert e.get_relative_days_start(d_plus_1) == -1
+
+def test_group_events_by_relative_day():
+    e1 = Activity(
+        activity_type="event",
+        summary=SUMMARY,
+        date_start=date(2022,1,1)
+        )
+
+    e2 = Activity(
+        activity_type="event",
+        summary=SUMMARY,
+        date_start=date(2022,1,2)
+        )
+
+    e3 = Activity(
+        activity_type="event",
+        summary=SUMMARY,
+        date_start=date(2022,1,1)
+        )
+
+    events = [e1, e2, e3]
+
+    grouped = group_events_by_relative_day(events, date(2022,1,1))
+
+    assert len(grouped) == 2
+    assert len(grouped[0]) == 2
+    assert len(grouped[1]) == 1
 
 # ========== Invalid cases ==========
 

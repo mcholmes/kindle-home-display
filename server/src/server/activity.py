@@ -89,7 +89,7 @@ class Activity(BaseModel):
         return calculate_short_time(self.time_start)
 
     @property
-    def time_start_end(self) -> str:
+    def time_end_short(self) -> str:
         return calculate_short_time(self.time_end)
 
     def get_relative_days_start(self, date_to_compare: datetime):

@@ -359,7 +359,6 @@ class Renderer(BaseModel):
         self.render_date(day, day_of_week, month)
         # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 
-        # TODO: return y0 from render_top_row
         y0 = self.top_row_y + self.space_between_sections
         y1 = self.render_activities("Today", events_today, y0)
         self.render_activities("Tomorrow", events_tomorrow, y1)
@@ -374,7 +373,7 @@ class Renderer(BaseModel):
             return output.getvalue()
 
     def save_png(self, output_filepath: str) -> None:
-        """ "
+        """
         Full path with .png extension
         """
         self._image.save(output_filepath, format="PNG")

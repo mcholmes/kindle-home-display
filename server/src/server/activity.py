@@ -65,7 +65,7 @@ class Activity(BaseModel):
     def ended_over_an_hour_ago(self) -> bool:
         hour_ago = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).time()
 
-        return self.ends_today and (
+        return self.ends_today and not self.is_all_day and (
             (self.time_end is not None and self.time_end <= hour_ago) or
             (self.time_end is None and self.time_start <= hour_ago)
         )

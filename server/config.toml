@@ -13,9 +13,5 @@ days_to_show = 2
 ids = {"holmbergs" = "10a2dd68e51bb17689c7ccf4f4722d1f445c59c86430577b425c33ccee27be2e@group.calendar.google.com"}
 creds = "/Users/mike.holmes/projects/kindle-home-display/server/credentials_service.json"
 
-# [weather]
-# latitude = 51.424340
-# longitude = -0.142855
-
 [tasks]
 project_id = 2306241165

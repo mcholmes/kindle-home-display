@@ -1,5 +1,8 @@
 # Mac files
-*.DS_STORE
+*.DS_Store
+.DS_Store
+
+# VS Code files
 .vscode/
 
 # Byte-compiled / optimized / DLL files

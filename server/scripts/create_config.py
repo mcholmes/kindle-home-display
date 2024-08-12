@@ -1,6 +1,7 @@
 # TODO: document the config TOML
 
 from configparser import ConfigParser
+from pathlib import Path
 
 config = ConfigParser()
 
@@ -30,5 +31,5 @@ config.add_section("output")
 config.set("output", "image_name", "dashboard.png")
 config.set("output", "server_dir", "/var/www/html/")
 
-with open("config.ini", "w") as f:
+with Path.open("config.ini", "w") as f:
     config.write(f)

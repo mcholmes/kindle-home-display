@@ -1,7 +1,7 @@
 import logging
-import os
 import pickle
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Union
 
 from gcsa.google_calendar import GoogleCalendar
@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from server.event import Event
+from server.activity import Activity
 
 logger = logging.getLogger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARN)
@@ -23,7 +23,7 @@ class GCal:
     Manages connections to Google Calendar and facilitates extraction of events.
     """
 
-    def __init__(self, creds_path):
+    def __init__(self, creds_path: Path):
         # Uncomment if using general oauth flow ###
         # current_path = str(pathlib.Path(__file__).parent.absolute())
         # creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
@@ -34,20 +34,20 @@ class GCal:
         #     self.generate_oauth_token(creds_path=creds_path, token_path=token_path)
         # self.calendar = self.create_calendar_oauth(creds_path)
 
-        if not os.path.exists(creds_path):
+        if not Path.exists(creds_path):
             err = f"No credentials file found at {creds_path}"
-            raise ValueError(err)
+            raise FileNotFoundError(err)
 
         self.calendar = self.create_calendar_service_user(creds_path)
         self.available_calendars = self.get_available_calendars()
 
     @staticmethod
     def is_token_valid(token_path):
-        if not os.path.exists(token_path):
+        if not Path.exists(token_path):
             return False
 
-        with open(token_path, "rb") as token:
-            creds = pickle.load(token)
+        with Path.open(token_path, "rb") as token:
+            creds = pickle.load(token)  # noqa: S301
 
         return creds.valid
 
@@ -65,9 +65,9 @@ class GCal:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists(token_path):
-            with open(token_path, "rb") as token:
-                creds = pickle.load(token)
+        if Path.exists(token_path):
+            with Path.open(token_path, "rb") as token:
+                creds = pickle.load(token)  # noqa: S301
 
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
@@ -77,7 +77,7 @@ class GCal:
                 flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open(token_path, "wb") as token:
+            with Path.open(token_path, "wb") as token:
                 pickle.dump(creds, token)
 
     def get_available_calendars(self):
@@ -137,7 +137,7 @@ class GCal:
         calendar_id: Optional[str] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
-    ) -> list[Event]:
+    ) -> list[Activity]:
         """
         Queries a given calendar API and converts responses into Event class.
         Defaults to primary if no calendar specified.
@@ -158,10 +158,11 @@ class GCal:
             )
 
         return [
-            Event.from_datetimes(
+            Activity.from_datetimes(
+                activity_type="event",
                 summary=e.summary,
-                dt_start=e.start,
-                dt_end=e.end,
+                datetime_start=e.start,
+                datetime_end=e.end,
                 description=e.description,
                 location=e.location,
             )
@@ -173,8 +174,8 @@ class GCal:
         date_from: datetime,
         date_to: datetime,
         additional_calendars: Optional[Union[str, list]] = None,
-        exclude_default_calendar: bool = False,
-    ) -> list[Event]:
+        exclude_default_calendar: bool = False,  # noqa: FBT001, FBT002
+    ) -> list[Activity]:
         min_time_str = date_from.isoformat()
         max_time_str = date_to.isoformat()
 

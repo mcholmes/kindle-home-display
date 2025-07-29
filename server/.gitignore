@@ -1,23 +1,22 @@
-# Mac files
-*.DS_STORE
+# Python specific files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
-# Google calendar credentials
+# Project credentials
 credentials*.json
 token.pickle
 api_keys.json
 
-# Ruff (from Hatch)
+# Python tooling
 .ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytest_cache/
 
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
+# Python distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -37,6 +36,14 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.pyc
+
+# Python virtual environments
+.venv/
+venv/
+
+# Python profiling
+*.prof
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

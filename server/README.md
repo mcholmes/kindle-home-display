@@ -7,8 +7,10 @@
 
 **Table of Contents**
 
-- [Installation](#installation)
-- [License](#license)
+- [server](#server)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [License](#license)
 
 ## Installation
 

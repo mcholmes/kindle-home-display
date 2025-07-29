@@ -120,7 +120,7 @@ optimise_power() {
   esac
   sleep 2
   
-  ### turn off 270 degree rotation of framebuffer device. TODO: what is this? from kindle-clock
+  ### turn off 270 degree rotation of framebuffer device. what is this? from kindle-clock
   # eval $FBROTATE
   
 }

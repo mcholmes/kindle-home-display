@@ -1,9 +1,8 @@
 from datetime import date, datetime, time, timedelta
-from typing import Union
-from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic import ValidationError
+from zoneinfo import ZoneInfo
 
 from server.activity import (
     Activity,
@@ -258,7 +257,7 @@ def test_calculate_short_time(any_datetime, expected):
     if any_datetime is None:
         assert calculate_short_time(any_datetime) is None
     else:
-        assert calculate_short_time(any_datetime) == expected  # noqa: SLF001
+        assert calculate_short_time(any_datetime) == expected
 
 def test_calculate_short_time_invalid_type():
     with pytest.raises(TypeError):

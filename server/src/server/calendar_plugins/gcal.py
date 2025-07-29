@@ -12,7 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from server.activity import Activity
 
 logger = logging.getLogger(__name__)
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARN)
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 USE_SERVICE_ACCOUNT = True

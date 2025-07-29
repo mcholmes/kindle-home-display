@@ -27,7 +27,7 @@ It's implemented in Python 3.9 due to that being natively available on a Raspber
 
 ### Configuration
 
-The server is configured using a TOML file (`config.toml`). This is documented in `server/CONFIG.md`.
+The server is configured using a TOML file (`config.toml`). This is documented in [CONFIG.md](server/CONFIG.md).
 
 #### Required API Credentials
 
@@ -42,12 +42,12 @@ The server is configured using a TOML file (`config.toml`). This is documented i
 - You need a Todoist API key (stored in `api_keys.json`)
 - Project ID can be found in the URL when viewing a project in Todoist web interface
 
-Device (Kindle):
+### Device Setup (Kindle)
 
-1. Jailbreak your Kindle, using any method (I used LanguageBreak).
-2. Install KUAL.
-3. Download the latest release and copy it to `/mnt/us/dashboard`.
-4. Open KUAL and tap `Start dashboard`.
+1. Jailbreak your Kindle, using any method (I used LanguageBreak)
+2. Install KUAL
+3. Download the latest release and copy it to `/mnt/us/dashboard`
+4. Open KUAL and tap `Start dashboard`
 
 :warning: TODO: complete this.
 

@@ -5,6 +5,7 @@ The server component of the Kindle Home Display is configured using a TOML file 
 ## Configuration Sections
 
 ### Server Settings
+
 ```toml
 [server]
 host = "127.0.0.1"      # The IP address to bind the server to
@@ -13,6 +14,7 @@ server_dir = "/path/to/server/"  # Directory where the server stores its files
 ```
 
 ### Display Settings
+
 ```toml
 [image]
 width = 1072           # Width of the generated dashboard image (Kindle screen width)
@@ -20,6 +22,7 @@ height = 1448          # Height of the generated dashboard image (Kindle screen 
 ```
 
 ### Calendar Integration
+
 ```toml
 [calendar]
 display_timezone = "Europe/London"   # Timezone for displaying calendar events
@@ -31,6 +34,7 @@ creds = "/path/to/credentials_service.json"  # Path to Google Calendar service a
 ```
 
 ### Task Integration (Todoist)
+
 ```toml
 [tasks]
 project_id = 1234567890  # Todoist project ID to display tasks from
@@ -49,15 +53,18 @@ project_id = 1234567890  # Todoist project ID to display tasks from
 ## Required API Credentials
 
 ### Google Calendar
+
 - You need a Google Cloud service account credentials file (`credentials_service.json`)
 - The service account must have access to the calendars you want to display
 - Calendar IDs can be found in Google Calendar settings under "Integrate calendar"
 
 ### Todoist
+
 - You need a Todoist API key (stored in `api_keys.json`)
 - Project ID can be found in the URL when viewing a project in Todoist web interface
 
 ## Example Configuration
+
 ```toml
 [server]
 host = "127.0.0.1"

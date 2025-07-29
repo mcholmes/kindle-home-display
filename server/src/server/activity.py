@@ -1,8 +1,8 @@
 from collections import defaultdict
-from datetime import date, datetime, time, timezone, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, ValidationError, ValidationInfo, field_validator
+from pydantic import BaseModel, ValidationInfo, field_validator
 
 
 class Activity(BaseModel):

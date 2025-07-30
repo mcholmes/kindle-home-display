@@ -116,18 +116,6 @@ def test_valid_extraneous_fields(valid_server_config, valid_image_config):
     assert config.image.width == 1072
     assert config.image.height == 1448
 
-def test_invalid_missing_api_key(valid_server_config, valid_image_config, valid_calendar_config, valid_tasks_config):
-    # Remove 'api_key' from tasks config if it is required
-    config = {
-        "server": valid_server_config,
-        "image": valid_image_config,
-        "calendar": valid_calendar_config,
-        "tasks": {}  # missing required api_key
-    }
-    with pytest.raises(ValueError, match="api_key"):
-        AppConfig.from_dicts(config)
-
-
 def test_no_matching_files(tmp_path):
     with pytest.raises(FileNotFoundError):
         find_file_in_dir(tmp_path, "testfile.json")

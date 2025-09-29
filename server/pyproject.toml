@@ -25,6 +25,9 @@ dependencies = [
   "fastapi-radar>=0.1.9",
 ]
 
+[project.scripts]
+kindle-server = "server.cli:cli"
+
 [tool.coverage.run]
 source_pkgs = ["server"] #, "tests"]
 branch = true

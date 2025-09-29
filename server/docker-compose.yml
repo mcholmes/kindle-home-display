@@ -13,9 +13,7 @@ services:
       - ./credentials_oauth.json:/app/credentials_oauth.json:ro
       # Mount data directory for logs and output
       - ./data:/app/data
-    environment:
-      - PYTHONPATH=/app/src
-    command: ["./run.sh", "--log-to-console", "start"]
+    command: ["kindle-server", "--log-to-console", "start"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

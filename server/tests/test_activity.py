@@ -1,8 +1,8 @@
 from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic import ValidationError
-from zoneinfo import ZoneInfo
 
 from server.activity import (
     Activity,

@@ -3,40 +3,49 @@
 
 .PHONY: install server test test-cov cov-report cov types perf clean help
 
-# Variables
-PYTHON := .venv/bin/python
-PYTEST_ARGS ?= tests
-MYPY_ARGS ?= src/server tests
-
 help: ## Show this help message
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 install: ## Install dependencies and project in development mode
-	uv venv --seed
+	uv sync
 	uv pip install -e .
-	uv pip install coverage[toml] pytest mypy tuna
 
+# Python development tasks (using uv run)
 server: ## Run the server with optional args (use ARGS="--help" for options)
-	$(PYTHON) -m server $(ARGS)
+	uv run kindle-server $(ARGS)
 
 test: ## Run tests with pytest
-	$(PYTHON) -m pytest $(PYTEST_ARGS)
+	uv run pytest tests
 
 test-cov: ## Run tests with coverage
-	$(PYTHON) -m coverage run -m pytest $(PYTEST_ARGS)
+	uv run coverage run -m pytest tests
 
 cov-report: ## Generate coverage report
-	-$(PYTHON) -m coverage combine
-	$(PYTHON) -m coverage report
+	uv run coverage report
+
+cov-html: ## Generate HTML coverage report
+	uv run coverage html
 
 cov: test-cov cov-report ## Run tests with coverage and generate report
 
 types: ## Run type checking with mypy
-	$(PYTHON) -m mypy --install-types --non-interactive $(MYPY_ARGS)
+	uv run mypy src/server tests
 
-perf: ## Run performance profiling
-	$(PYTHON) -mcProfile -o program.prof src/server/__main__.py $(ARGS) && $(PYTHON) -m tuna program.prof
+lint: ## Run linting with ruff
+	uv run ruff check src tests
+
+lint-fix: ## Run linting with ruff and fix issues
+	uv run ruff check --fix src tests
+
+format: ## Format code with ruff
+	uv run ruff format src tests
+
+format-check: ## Check code formatting
+	uv run ruff format --check src tests
+
+profile: ## Run performance profiling
+	uv run python -m cProfile -o program.prof src/server/__main__.py $(ARGS) && uv run tuna program.prof
 
 clean: ## Clean up generated files
 	rm -rf .coverage

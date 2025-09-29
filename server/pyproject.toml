@@ -73,5 +73,6 @@ keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runt
 dev = [
     "mypy>=1.18.2",
     "pytest>=8.4.2",
+    "ruff>=0.13.2", 
     "tuna>=0.5.11",
 ]

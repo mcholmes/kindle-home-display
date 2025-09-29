@@ -2,10 +2,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
-from zoneinfo import ZoneInfo
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.cal import Calendar

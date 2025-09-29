@@ -1,6 +1,6 @@
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta, timezone
-from typing import Literal, Optional, Union
+from datetime import UTC, date, datetime, time, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, ValidationInfo, field_validator
 
@@ -13,11 +13,11 @@ class Activity(BaseModel):
     activity_type: Literal['event', 'task']
     summary: str
     date_start: date
-    date_end: Optional[date] = None  # if none then all-day. if > start_date, then multi-day
-    time_start: Optional[time] = None  # if none then all-day. if populated without end time, then it's a point in time
-    time_end: Optional[time] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
+    date_end: date | None = None  # if none then all-day. if > start_date, then multi-day
+    time_start: time | None = None  # if none then all-day. if populated without end time, then it's a point in time
+    time_end: time | None = None
+    description: str | None = None
+    location: str | None = None
 
     @field_validator('time_end')
     def validate_time_end(cls, time_end, info: ValidationInfo):  # noqa: N805
@@ -41,9 +41,9 @@ class Activity(BaseModel):
         activity_type: str,
         summary: str,
         datetime_start: datetime,
-        datetime_end: Optional[datetime] = None,
-        description: Optional[str] = None,
-        location: Optional[str] = None,
+        datetime_end: datetime | None = None,
+        description: str | None = None,
+        location: str | None = None,
     ):
         return cls(
             activity_type=activity_type,
@@ -58,12 +58,12 @@ class Activity(BaseModel):
 
     @property
     def ends_today(self) -> bool:
-        today = datetime.now(tz=timezone.utc).date()
+        today = datetime.now(tz=UTC).date()
         return (self.date_end is None and self.date_start == today) or self.date_end == today
 
     @property
     def ended_over_an_hour_ago(self) -> bool:
-        hour_ago = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).time()
+        hour_ago = (datetime.now(tz=UTC) - timedelta(hours=1)).time()
 
         return self.ends_today and not self.is_all_day and (
             (self.time_end is not None and self.time_end <= hour_ago) or
@@ -98,7 +98,7 @@ class Activity(BaseModel):
         return delta.days
 
 
-def datetime_to_time(dt: Union[datetime, date]) -> time:
+def datetime_to_time(dt: datetime | date) -> time:
 
     if dt is None:
         return None
@@ -112,7 +112,7 @@ def datetime_to_time(dt: Union[datetime, date]) -> time:
     err = f"Input must be of type datetime or date, not {type(dt)}"
     raise TypeError(err)
 
-def datetime_to_date(dt: Union[datetime, date]) -> date:
+def datetime_to_date(dt: datetime | date) -> date:
     """
     This is tricky because of how the standard library treats dates and datetimes.
     See https://github.com/python/mypy/issues/9015
@@ -136,7 +136,7 @@ def datetime_to_date(dt: Union[datetime, date]) -> date:
     err = "Input is not a datetime or date: {dt}"
     raise TypeError(err)
 
-def calculate_short_time(dt_object: Union[datetime, time]) -> str:
+def calculate_short_time(dt_object: datetime | time) -> str:
     if dt_object is None:
         return None
     if not isinstance(dt_object, (datetime, time)):

@@ -4,7 +4,7 @@ version = "0.5.1"
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
 # requires-python = ">=3.9,<3.10" # 3.9 default on Raspberry Pi
-requires-python = "==3.12"
+requires-python = "~=3.12.0"
 license = "MIT"
 keywords = []
 authors = [

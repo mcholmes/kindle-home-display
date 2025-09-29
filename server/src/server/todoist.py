@@ -1,6 +1,5 @@
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 from pydantic import SecretStr
 from todoist_api_python.api import TodoistAPI
@@ -15,8 +14,6 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: datetime) -
     """
     Returns all tasks within a given Project before the specified end date (i.e. includes overdue tasks).
     """
-
-    tz: timezone = date_end.tzinfo
 
     api = TodoistAPI(api_key.get_secret_value())
 
@@ -47,7 +44,7 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: datetime) -
         logger.exception("Failed to get tasks.")
         raise
 
-    def include_task(due: Optional[Due]) -> bool:
+    def include_task(due: Due | None) -> bool:
         return due is not None and due.date <= date_end.date()
 
     tasks_due: list[Task] = filter(lambda x: include_task(x.due), tasks)
@@ -68,7 +65,7 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: datetime) -
             activity_type="task",
             summary=summary,
             date_start=task.due.date,
-            time_start=None, # TODO: fix this hardcoding - this is a union type now https://doist.github.io/todoist-api-python/models/#todoist_api_python.models.Due
+            time_start=None, # TODO: fix this hardcoding - can be date, datetime or time https://doist.github.io/todoist-api-python/models/#todoist_api_python.models.Due
             # time_start=datetime.fromisoformat(task.due.datetime).time() if task.due.datetime is not None else None,
             description=desc
         )

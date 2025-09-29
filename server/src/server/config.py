@@ -2,7 +2,6 @@ import json
 from collections.abc import Iterator
 from ipaddress import IPv4Address
 from pathlib import Path
-from typing import Optional
 
 import toml
 import yaml
@@ -138,10 +137,10 @@ class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a 
     server: ServerConfig
     image: ImageConfig
 
-    api_keys: Optional[dict[str, SecretStr]] = None
-    calendar: Optional[CalendarConfig] = None
-    weather: Optional[WeatherConfig] = None
-    tasks: Optional[TasksConfig] = None
+    api_keys: dict[str, SecretStr] | None = None
+    calendar: CalendarConfig | None = None
+    weather: WeatherConfig | None = None
+    tasks: TasksConfig | None = None
 
     @classmethod
     def from_dir(cls, directory: Path):
@@ -177,7 +176,7 @@ class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a 
         return cls.from_dicts(config_dict, api_keys_dict)
 
     @classmethod
-    def from_dicts(cls, config: dict, api_keys: Optional[dict[str, SecretStr]] = None):
+    def from_dicts(cls, config: dict, api_keys: dict[str, SecretStr] | None = None):
         """
         Instantiate this class and its fields from a dictionary, and an optional dictionary of API keys.
         Any unrecognised fields in the config will be ignored.

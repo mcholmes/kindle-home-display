@@ -1,0 +1,11 @@
+# Core dependencies for kindle-home-display-server
+tzdata
+pydantic
+pillow
+gcsa
+requests
+toml
+fastapi
+uvicorn[standard]
+typer
+todoist-api-python~=2.1.0

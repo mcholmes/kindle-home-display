@@ -1,9 +1,10 @@
 [project]
-name = "server"
+name = "kindle-home-display-server"
 version = "0.5.1"
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
-requires-python = ">=3.9,<3.10" # 3.9 default on Raspberry Pi
+# requires-python = ">=3.9,<3.10" # 3.9 default on Raspberry Pi
+requires-python = "==3.12"
 license = "MIT"
 keywords = []
 authors = [
@@ -20,16 +21,9 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "typer",
-  "todoist-api-python~=2.1.0",
+  "todoist-api-python~=3.1.0",
+  "fastapi-radar>=0.1.9",
 ]
-
-[project.urls]
-Documentation = "https://github.com/unknown/server#readme"
-Issues = "https://github.com/unknown/server/issues"
-Source = "https://github.com/unknown/server"
-
-[project.scripts]
-server = "server.cli:cli"
 
 [tool.coverage.run]
 source_pkgs = ["server"] #, "tests"]

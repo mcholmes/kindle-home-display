@@ -1,0 +1,29 @@
+[server]
+host = "0.0.0.0"  # Listen on all interfaces in Docker
+port = 8000
+server_dir = "/app/data/"  # Use mounted data directory
+server_log_file_name = "server.log"
+device_log_file_name = "device.log"
+image_name = "dashboard.png"
+
+[image]
+width = 1072
+height = 1448
+rotate_angle = 0
+margin_x = 50
+margin_y = 50
+
+[calendar]
+display_timezone = "Europe/London"
+days_to_show = 2
+# Update these with your actual calendar configuration
+ids = {"example" = "your-calendar-id@group.calendar.google.com"}
+creds = "/app/credentials_service.json"
+
+[tasks]
+# Update with your actual project ID
+project_id = 0
+
+[weather]
+# Add your weather configuration here if needed
+# api_key will be read from api_keys.json

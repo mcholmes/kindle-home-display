@@ -48,3 +48,25 @@ clean: ## Clean up generated files
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
+
+# Docker targets
+docker-build: ## Build Docker image
+	docker-compose build
+
+docker-up: ## Start Docker services
+	docker-compose up -d
+
+docker-down: ## Stop Docker services
+	docker-compose down
+
+docker-logs: ## View Docker logs
+	docker-compose logs -f server
+
+docker-dev: ## Start development server with hot reload
+	docker-compose --profile dev up server-dev
+
+docker-shell: ## Shell into running Docker container
+	docker-compose exec server bash
+
+docker-health: ## Check Docker container health
+	curl -f http://localhost:8000/health || echo "Health check failed"

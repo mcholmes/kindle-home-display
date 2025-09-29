@@ -179,8 +179,18 @@ class AppServer(App):
             methods=["GET"],
             )
 
+        self.router.add_api_route(
+            "/health",
+            endpoint=self.health_check,
+            methods=["GET"],
+            )
+
         logger.debug("Started server.")
         # TODO: add a POST for device to send its logs back to server
 
     def root(self) -> str:
         return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
+
+    def health_check(self) -> dict[str, str]:
+        """Health check endpoint for Docker health checks and monitoring."""
+        return {"status": "healthy", "timestamp": datetime.now().isoformat()}

@@ -22,9 +22,10 @@ COPY src/ ./src/
 COPY run.sh ./
 COPY ruff_defaults.toml ./
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user with home directory
+RUN groupadd -r appuser && useradd -r -g appuser -m appuser
 RUN chown -R appuser:appuser /app
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appuser /home/appuser
 USER appuser
 
 # Expose port

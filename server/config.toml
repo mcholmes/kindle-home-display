@@ -1,7 +1,7 @@
 [server]
-host = "127.0.0.1"
+host = "0.0.0.0"  # Listen on all interfaces (works for both local and Docker)
 port = 8000
-server_dir = "/Users/mike.holmes/projects/kindle-home-display/server/"
+server_dir = "./data/"  # Use relative path that works in both environments
 
 [image]
 width = 1072
@@ -11,7 +11,7 @@ height = 1448
 display_timezone = "Europe/London"
 days_to_show = 2
 ids = {"holmbergs" = "10a2dd68e51bb17689c7ccf4f4722d1f445c59c86430577b425c33ccee27be2e@group.calendar.google.com"}
-creds = "/Users/mike.holmes/projects/kindle-home-display/server/credentials_service.json"
+creds = "./credentials_service.json"  # Use relative path that works in both environments
 
 [tasks]
 project_id = "6MmR9G3CcW4VF27h"

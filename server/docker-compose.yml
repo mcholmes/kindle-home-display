@@ -15,7 +15,7 @@ services:
       - ./data:/app/data
     environment:
       - PYTHONPATH=/app/src
-    command: ["uv", "run", "server", "start", "--config-dir", "/app", "--log-to-console"]
+    command: ["./run.sh", "--log-to-console", "start"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

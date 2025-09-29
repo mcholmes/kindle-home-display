@@ -24,4 +24,6 @@ node_modules/
 .env
 *.local
 
-
+# Python
+.ruff_cache/
+.pytest_cache/

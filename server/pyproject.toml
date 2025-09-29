@@ -1,27 +1,13 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "server"
-dynamic = ["version"]
+version = "0.5.1"
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
-requires-python = ">=3.9" # default on Raspberry Pi
+requires-python = ">=3.9,<3.10" # 3.9 default on Raspberry Pi
 license = "MIT"
 keywords = []
 authors = [
   { name = "Mike Holmes", email = "michael@mcholmes.com" },
-]
-classifiers = [
-  "Development Status :: 4 - Beta",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
 dependencies = [
@@ -34,7 +20,7 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "typer",
-  "todoist-api-python"
+  "todoist-api-python~=2.1.0",
 ]
 
 [project.urls]
@@ -44,9 +30,6 @@ Source = "https://github.com/unknown/server"
 
 [project.scripts]
 server = "server.cli:cli"
-
-[tool.hatch.version]
-path = "src/server/__about__.py"
 
 [tool.coverage.run]
 source_pkgs = ["server"] #, "tests"]
@@ -88,3 +71,10 @@ extend-select = ["PTH"]
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runtime types
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "tuna>=0.5.11",
+]

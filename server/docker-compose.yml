@@ -1,12 +1,11 @@
 # Docker Compose for Kindle Home Display Server
+name: kindle-home-display
 
 services:
   server:
     build:
       context: .
-      platforms:
-        - linux/amd64
-        - linux/arm/v7
+      target: production
     ports:
       - "8000:8000"
     volumes:
@@ -17,7 +16,8 @@ services:
       - ./credentials_oauth.json:/app/credentials_oauth.json:ro
       # Mount data directory for logs and output
       - ./data:/app/data
-    command: ["kindle-server", "--log-to-console", "start"]
+    environment:
+      - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -25,16 +25,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Optional: Add a development service with hot reload
-  server-dev:
-    build: .
-    ports:
-      - "8001:8000"
-    volumes:
-      - .:/app
-    environment:
-      - PYTHONPATH=/app/src
-    command: ["uv", "run", "uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    profiles:
-      - dev
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M

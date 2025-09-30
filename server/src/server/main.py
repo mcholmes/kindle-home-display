@@ -19,6 +19,7 @@ import logging
 import os
 from pathlib import Path
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi_radar import Radar
 
@@ -26,17 +27,11 @@ from server.app import App
 from server.config import AppConfig
 
 
-def setup_logging():
-    """Configure logging based on environment variables."""
+def setup_logging(config: AppConfig, log_to_console: bool = False) -> None:
+    """Configure logging."""
     log_level = os.environ.get("LOG_LEVEL", "INFO")
-    log_to_console = os.environ.get("LOG_TO_CONSOLE", "false").lower() == "true"
-
-    # Load config to get log file path
-    config_dir = Path(os.environ.get("CONFIG_DIR", "."))
-    config = AppConfig.from_dir(config_dir)
     log_filepath = Path(config.server.server_dir) / config.server.server_log_file_name
 
-    # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
 
@@ -47,25 +42,31 @@ def setup_logging():
 
     # File handler
     log_dir = log_filepath.parent
-    log_dir.mkdir(exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
     file_handler = logging.FileHandler(log_filepath)
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
 
-    # Console handler (optional)
+    # Console handler
     if log_to_console:
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
-    return config
-
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
 
-    # Setup logging and load config
-    config = setup_logging()
+    # Load configuration
+    config_dir = Path(os.environ.get("CONFIG_DIR", "."))
+    config = AppConfig.from_dir(config_dir)
+
+    # Setup logging
+    log_to_console = os.environ.get("LOG_TO_CONSOLE", "false").lower() == "true"
+    setup_logging(config, log_to_console)
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting Kindle Home Display Server with config from {config_dir}")
 
     # Create app instance with routes
     app_instance = App.create_server(config)
@@ -74,40 +75,43 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Kindle Home Display Server",
         description="Generates dashboard images for Kindle display device",
-        version="0.5.1"
+        version="1.0.0",
     )
 
     # Include routes
     app.include_router(app_instance.router)
 
     # Setup monitoring with FastAPI Radar
+    radar_db_path = Path(config.server.server_dir) / "radar.duckdb"
     radar = Radar(
         app,
-        max_requests=1000,           # Max requests to store (default: 1000)
-        retention_hours=240,         # Data retention period (default: 24)
-        slow_query_threshold=1000,   # Mark queries slower than this as slow (ms)
-        exclude_paths=["/health"],   # Paths to exclude from monitoring
-        theme="auto",                # Dashboard theme: "light", "dark", or "auto"
-        db_path="./data/radar.duckdb",       # Custom path for radar.duckdb file (default: current directory)
+        max_requests=1000,
+        retention_hours=240,
+        slow_query_threshold=1000,
+        exclude_paths=["/health"],
+        theme="auto",
+        db_path=str(radar_db_path),
     )
     radar.create_tables()
+
+    logger.info(f"Server initialized on {config.server.host}:{config.server.port}")
 
     return app
 
 
-# Create the app instance
+# Create app instance for uvicorn/fastapi
 app = create_app()
 
 
 if __name__ == "__main__":
-    # For development - use `python -m server.main`
-    import uvicorn
+    # Load config for CLI usage
     config_dir = Path(os.environ.get("CONFIG_DIR", "."))
     config = AppConfig.from_dir(config_dir)
+
     uvicorn.run(
         "server.main:app",
         host=str(config.server.host),
         port=config.server.port,
         reload=True,
-        log_level="info"
+        log_level="info",
     )

@@ -4,12 +4,14 @@ This directory contains the Docker configuration for the Kindle Home Display Ser
 
 ## Features
 
-- 🐍 **Modern Python Runtime**: Uses Python 3.12 (easily configurable)
+- 🐍 **Modern Python Runtime**: Uses Python 3.13 (easily configurable)
 - 📦 **UV Package Manager**: Fast, reliable dependency resolution
 - 🔒 **Security**: Runs as non-root user
 - 🏥 **Health Checks**: Built-in health monitoring
 - 📁 **Volume Mounts**: Persistent data and easy configuration
-- 🔄 **Development Mode**: Hot reload support
+- 🔄 **Development Mode**: Hot reload support with file watching
+- 🏗️ **Multi-stage Builds**: Optimized production and development images
+- 🌍 **Multi-platform**: Supports AMD64, ARM64, and ARMv7 architectures
 
 ## Quick Start
 

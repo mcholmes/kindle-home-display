@@ -32,6 +32,11 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+pythonenv*
+
+# UV tool cache
+.uv-cache/
+.uv/
 
 # IDE
 .vscode/
@@ -58,11 +63,15 @@ output.prof
 program.prof
 server.log
 tuna.log
+*.db
+*.sqlite
+*.sqlite3
 
 # Docker
 .dockerignore
 Dockerfile*
 docker-compose*
+.docker/
 
 # Git
 .git
@@ -73,6 +82,8 @@ README.md
 CONFIG.md
 SETUP.md
 LICENSE.txt
+*.md
+docs/
 
 # Tests and development tools
 tests/
@@ -80,8 +91,27 @@ tests/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+htmlcov/
+.coverage.*
+*.test
+test_*.py
+*_test.py
 
 # Build artifacts
 target/
 *.tar.gz
 *.zip
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Security and secrets (extra safety)
+*.pem
+*.key
+*.cert
+secrets/
+.secrets/

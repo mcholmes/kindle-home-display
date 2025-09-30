@@ -44,7 +44,7 @@ done
 
 # Build the Docker image
 print_status $YELLOW "🔨 Building Docker image..."
-if docker-compose build; then
+if docker compose build; then
     print_status $GREEN "✅ Docker image built successfully"
 else
     print_status $RED "❌ Failed to build Docker image"
@@ -53,7 +53,7 @@ fi
 
 # Start the services
 print_status $YELLOW "🚀 Starting Docker services..."
-if docker-compose up -d; then
+if docker compose up -d; then
     print_status $GREEN "✅ Docker services started"
 else
     print_status $RED "❌ Failed to start Docker services"
@@ -72,7 +72,7 @@ if curl -f http://localhost:8000/health >/dev/null 2>&1; then
 else
     print_status $RED "❌ Health check failed"
     print_status $YELLOW "📋 Service logs:"
-    docker-compose logs --tail=20 server
+    docker compose logs --tail=20 server
 fi
 
 # Test main endpoint
@@ -85,7 +85,7 @@ fi
 
 # Show running containers
 print_status $YELLOW "📋 Running containers:"
-docker-compose ps
+docker compose ps
 
 echo ""
 print_status $GREEN "🎉 Docker setup test completed!"
@@ -94,9 +94,9 @@ echo "Next steps:"
 echo "- Visit http://localhost:8000 to see the server"
 echo "- Visit http://localhost:8000/dashboard to see the dashboard image"
 echo "- Visit http://localhost:8000/docs to see the API documentation"
-echo "- Run 'docker-compose logs -f server' to view live logs"
-echo "- Run 'docker-compose down' to stop the services"
+echo "- Run 'docker compose logs -f server' to view live logs"
+echo "- Run 'docker compose down' to stop the services"
 echo ""
 echo "For development with hot reload:"
-echo "- Run 'docker-compose --profile dev up server-dev'"
+echo "- Run 'docker compose --profile dev up server-dev'"
 echo "- Development server will be available at http://localhost:8001"

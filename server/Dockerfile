@@ -1,18 +1,19 @@
 # Stage 1: Generate requirements.txt from uv.lock
-FROM --platform=$BUILDPLATFORM python:3.12-slim AS uv-exporter
+FROM --platform=$BUILDPLATFORM python:3.13-slim AS uv-exporter
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /tmp
 COPY pyproject.toml uv.lock ./
 RUN uv export --format requirements-txt --no-dev > requirements.txt
 
-# Stage 2: Production image
-FROM python:3.12-slim
+# Stage 2: Base image with common dependencies
+FROM python:3.13-slim AS base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Set working directory
 WORKDIR /app
@@ -21,20 +22,25 @@ WORKDIR /app
 COPY --from=uv-exporter /tmp/requirements.txt ./
 
 # Install dependencies using pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy source code and project files
 COPY src/ ./src/
 COPY pyproject.toml ./
 COPY ruff_defaults.toml ./
 
-# Install the package itself (creates the console script entry point)
-RUN pip install --no-cache-dir -e .
+# Install the package itself (non-editable for production base)
+RUN pip install --no-cache-dir .
 
 # Create non-root user with home directory
-RUN groupadd -r appuser && useradd -r -g appuser -m appuser
+RUN groupadd -r appuser && useradd -r -g appuser -m -s /bin/bash appuser
 RUN chown -R appuser:appuser /app
 RUN mkdir -p /home/appuser/.cache && chown -R appuser:appuser /home/appuser
+
+# Stage 3: Production image
+FROM base AS production
+
 USER appuser
 
 # Expose port

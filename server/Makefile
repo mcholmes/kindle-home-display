@@ -13,10 +13,10 @@ install: ## Install dependencies and project in development mode
 
 # Python development tasks (using uv run)
 server: ## Run the server with optional args (use ARGS="--help" for options)
-	uv run fastapi run src/server/main.py $(ARGS)
+	uv run uvicorn server.main:app --host 0.0.0.0 --port 8000 $(ARGS)
 
 server-dev: ## Run the server in development mode with auto-reload
-	uv run fastapi dev src/server/main.py $(ARGS)
+	uv run uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload $(ARGS)
 
 generate-image: ## Generate dashboard image once
 	uv run python generate_image.py
@@ -78,7 +78,7 @@ docker-logs: ## View Docker logs
 	docker-compose logs -f server
 
 docker-dev: ## Start development server with hot reload
-	docker-compose --profile dev up server-dev
+	@echo "Dev server removed from Docker. Use 'make server-dev' instead."
 
 docker-shell: ## Shell into running Docker container
 	docker-compose exec server bash

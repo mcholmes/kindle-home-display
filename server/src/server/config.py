@@ -7,16 +7,9 @@ from pydantic import BaseModel, Field, SecretStr
 
 
 class ServerConfig(BaseModel):
-    host: IPv4Address = Field(
-        default="127.0.0.1",
-        description="Host to bind socket to. Any valid IP address",
-    )
-    port: int = Field(
-        default=8080, ge=0, le=65535, description="Port to bind socket to"
-    )
     server_dir: str = Field(
-        default="/var/www/html/",
-        description="Folder to write files to (e.g. image files, logs). Typical for apache2"
+        default="./data",
+        description="Folder to write files to (e.g. image files, logs, radar database)"
     )
     server_log_file_name: str = Field(default="server.log", description="File name to write server logs to")
     image_name: str = Field(default="dashboard.png", description="Image name, if writing as file")
@@ -121,11 +114,9 @@ class AppConfig(BaseModel):
     def _apply_env_overrides(config_dict: dict) -> None:
         """Apply environment variable overrides to configuration dictionary."""
 
-        # Server overrides
-        if "SERVER_HOST" in os.environ:
-            config_dict.setdefault("server", {})["host"] = os.environ["SERVER_HOST"]
-        if "SERVER_PORT" in os.environ:
-            config_dict.setdefault("server", {})["port"] = int(os.environ["SERVER_PORT"])
+        # Server directory override
+        if "SERVER_DIR" in os.environ:
+            config_dict.setdefault("server", {})["server_dir"] = os.environ["SERVER_DIR"]
 
         # Load API keys from environment variables
         todoist_key = os.environ.get("TODOIST_API_KEY")

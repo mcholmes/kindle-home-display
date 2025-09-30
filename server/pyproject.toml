@@ -1,6 +1,6 @@
 [project]
 name = "kindle-home-display-server"
-version = "0.5.1"
+version = "0.6.0"
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
 # requires-python = ">=3.9,<3.10" # 3.9 default on Raspberry Pi
@@ -20,21 +20,17 @@ dependencies = [
   "toml",
   "fastapi",
   "uvicorn[standard]",
-  "typer",
   "todoist-api-python~=3.1.0",
   "fastapi-radar>=0.1.9",
 ]
 
 [project.scripts]
-kindle-server = "server.cli:cli"
+kindle-generate = "generate_image:main"
 
 [tool.coverage.run]
 source_pkgs = ["server"] #, "tests"]
 branch = true
 parallel = true
-omit = [
-  "src/server/__about__.py",
-]
 
 [tool.coverage.paths]
 server = ["src/server", "*/server/src/server"]

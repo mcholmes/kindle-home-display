@@ -18,9 +18,7 @@ def setup(
     config_dir: Annotated[
         Path,
         Option(
-            help="""Location of 'config' & 'api_keys' files.
-                Either file can be TOML, YAML or JSON.
-                Default location is current dir."""
+            help="Location of config.toml file. Default location is current dir."
         ),
     ] = current_dir,
     log_level: Annotated[str, Option(help="Logging level")] = "INFO",
@@ -29,10 +27,10 @@ def setup(
     """
     Command-line interface for an app which creates & serves an image to be polled by
     dashboard device using wget or similar.
-
-    After pip installing the .whl, run this from the command line:
-    nohup server start > ~/uvicorn.log &1>2
-
+    
+    API keys should be provided via environment variables:
+    - TODOIST_API_KEY for tasks integration
+    - OPENWEATHERMAP_API_KEY for weather integration
     """
 
     config = AppConfig.from_dir(config_dir)
@@ -62,10 +60,15 @@ def start(ctx: Context):
     """ Start the server """
     import uvicorn
     from fastapi import FastAPI
+    from fastapi_radar import Radar
 
     app: AppServer = AppServer(ctx.obj.config)
     f = FastAPI()
     f.include_router(app.router)
+
+    # Monitor HTTP requests and exceptions only
+    radar = Radar(f)
+    radar.create_tables()
 
     uvicorn.run(f, host=str(app.config.server.host), port=app.config.server.port)
 

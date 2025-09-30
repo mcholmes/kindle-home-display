@@ -1,6 +1,6 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -8,7 +8,7 @@ from fastapi import APIRouter, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
-from server.cal import Calendar
+from server.calendar_plugins.gcal import GCal
 from server.config import AppConfig
 from server.render import Renderer
 from server.todoist import get_tasks_todoist
@@ -110,26 +110,30 @@ class App:
 
     def get_tasks(self, current_date: datetime) -> list[Activity]:
         config = self.config.tasks
+        if not config or not config.api_key:
+            return []
 
         project_id = config.project_id
         date_end = current_date + timedelta(days=self.config.calendar.days_to_show)
-        return get_tasks_todoist(api_key=self.config.api_keys["todoist"], project_id=project_id, date_end=date_end)
+        return get_tasks_todoist(api_key=config.api_key, project_id=project_id, date_end=date_end)
 
     def get_appointments(self, current_date: datetime) -> list[Activity]:
         config = self.config.calendar
+        if not config:
+            return []
 
-        calendar_ids = config.ids.values()
-        credentials = config.creds
+        # Calculate date range (same logic that was in Calendar class)
+        start_date = datetime.combine(current_date.date(), time.min)  # midnight today
+        end_date = start_date + timedelta(days=config.days_to_show)
 
-        # TODO: do I really need a Calendar object? It doesn't do much any more
-        cal = Calendar(
-            credentials=credentials,
-            calendar_ids=calendar_ids,
-            current_date=current_date,
-            days_to_show=config.days_to_show,
+        # Use GCal directly instead of the redundant Calendar wrapper
+        gcal = GCal(config.creds)
+        return gcal.get_events(
+            date_from=start_date,
+            date_to=end_date,
+            additional_calendars=list(config.ids.values()),
+            exclude_default_calendar=False,
         )
-
-        return cal.get_events_cal()
 
     def get_weather():
         ...
@@ -193,4 +197,4 @@ class AppServer(App):
 
     def health_check(self) -> dict[str, str]:
         """Health check endpoint for Docker health checks and monitoring."""
-        return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+        return {"status": "healthy", "timestamp": datetime.now(tz=ZoneInfo("UTC")).isoformat()}

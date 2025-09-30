@@ -18,7 +18,7 @@ This project repurposes a Kindle as a home display that can go several weeks wit
 
 ### Server Setup
 
-:warning: TODO: 
+:warning: TODO:
 
 - update the installation & usage
 - publish builds as downloadable releases

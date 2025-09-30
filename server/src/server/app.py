@@ -9,9 +9,9 @@ from fastapi.responses import HTMLResponse
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.config import AppConfig
-from server.gcal import GCal
+from server.datasources.gcal import GCal
+from server.datasources.todoist import get_tasks_todoist
 from server.render import Renderer
-from server.todoist import get_tasks_todoist
 
 logger = logging.getLogger(__name__)
 

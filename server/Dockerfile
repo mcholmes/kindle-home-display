@@ -1,5 +1,5 @@
 # Stage 1: Generate requirements.txt from uv.lock
-FROM python:3.12-slim AS uv-exporter
+FROM --platform=$BUILDPLATFORM python:3.12-slim AS uv-exporter
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 WORKDIR /tmp

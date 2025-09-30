@@ -2,7 +2,11 @@
 
 services:
   server:
-    build: .
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm/v7
     ports:
       - "8000:8000"
     volumes:

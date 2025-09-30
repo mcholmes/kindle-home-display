@@ -18,12 +18,8 @@ server: ## Run the server with optional args (use ARGS="--help" for options)
 server-dev: ## Run the server in development mode with auto-reload
 	uv run fastapi dev src/server/main.py $(ARGS)
 
-generate: ## Generate dashboard image once
+generate-image: ## Generate dashboard image once
 	uv run python generate_image.py
-
-image: generate ## Alias for generate
-
-serve: server-dev ## Alias for server-dev (start development server)
 
 test: ## Run tests with pytest
 	uv run pytest tests

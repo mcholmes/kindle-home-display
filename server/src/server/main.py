@@ -83,7 +83,6 @@ def create_app() -> FastAPI:
     # Setup monitoring with FastAPI Radar
     radar = Radar(
         app,
-        dashboard_path="/__radar",   # Custom dashboard path (default: "/__radar")
         max_requests=1000,           # Max requests to store (default: 1000)
         retention_hours=240,         # Data retention period (default: 24)
         slow_query_threshold=1000,   # Mark queries slower than this as slow (ms)

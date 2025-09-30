@@ -13,7 +13,18 @@ install:
 # Python development tasks
 # Run the server with optional arguments
 server *args:
-    uv run kindle-server {{args}}
+    uv run fastapi run src/server/main.py {{args}}
+
+# Run the server in development mode with auto-reload
+server-dev *args:
+    uv run fastapi dev server/main.py {{args}}
+
+# Generate dashboard image once  
+generate:
+    uv run python generate_image.py
+
+# Alias for generate
+image: generate
 
 # Run tests with pytest
 test:
@@ -56,7 +67,7 @@ format-check:
 
 # Run performance profiling
 profile *args:
-    uv run python -m cProfile -o program.prof src/server/__main__.py {{args}}
+    PYTHONPATH=src uv run python -m cProfile -o program.prof -m server.main {{args}}
     uv run tuna program.prof
 
 # Clean up generated files
@@ -67,7 +78,7 @@ clean:
     rm -rf htmlcov/
     rm -rf build/
     rm -rf dist/
-    rm -rf *.egg-info/
+    rm -rf *.egg-info
     find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
     find . -type f -name "*.pyc" -delete
     find . -type f -name "*.pyo" -delete
@@ -112,6 +123,9 @@ qa: lint types test
 
 # Quick development cycle
 dev: lint-fix format test
+
+# Start development server (alias for server-dev)
+serve: server-dev
 
 # Prepare for commit
 pre-commit: format lint types test cov-report

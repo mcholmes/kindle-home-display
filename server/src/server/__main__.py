@@ -9,15 +9,17 @@ For production, use:
 """
 
 if __name__ == "__main__":
-    import uvicorn
-    from pathlib import Path
     import os
+    from pathlib import Path
+
+    import uvicorn
+
     from server.config import AppConfig
-    
+
     # Load config to get host/port
     config_dir = Path(os.environ.get("CONFIG_DIR", "."))
     config = AppConfig.from_dir(config_dir)
-    
+
     # Run with uvicorn
     uvicorn.run(
         "server.main:app",

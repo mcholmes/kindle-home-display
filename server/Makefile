@@ -13,7 +13,17 @@ install: ## Install dependencies and project in development mode
 
 # Python development tasks (using uv run)
 server: ## Run the server with optional args (use ARGS="--help" for options)
-	uv run kindle-server $(ARGS)
+	uv run fastapi run src/server/main.py $(ARGS)
+
+server-dev: ## Run the server in development mode with auto-reload
+	uv run fastapi dev src/server/main.py $(ARGS)
+
+generate: ## Generate dashboard image once
+	uv run python generate_image.py
+
+image: generate ## Alias for generate
+
+serve: server-dev ## Alias for server-dev (start development server)
 
 test: ## Run tests with pytest
 	uv run pytest tests
@@ -44,8 +54,8 @@ format: ## Format code with ruff
 format-check: ## Check code formatting
 	uv run ruff format --check src tests
 
-profile: ## Run performance profiling
-	uv run python -m cProfile -o program.prof src/server/__main__.py $(ARGS) && uv run tuna program.prof
+profile: ## Run performance profiling  
+	PYTHONPATH=src uv run python -m cProfile -o program.prof -m server.main $(ARGS) && uv run tuna program.prof
 
 clean: ## Clean up generated files
 	rm -rf .coverage

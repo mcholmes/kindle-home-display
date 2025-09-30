@@ -18,8 +18,7 @@ dependencies = [
   "gcsa",
   "requests",
   "toml",
-  "fastapi",
-  "uvicorn[standard]",
+  "fastapi[standard-no-fastapi-cloud-cli]",
   "todoist-api-python~=3.1.0",
   "fastapi-radar>=0.1.9",
 ]

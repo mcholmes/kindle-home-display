@@ -19,7 +19,6 @@ class ServerConfig(BaseModel):
         description="Folder to write files to (e.g. image files, logs). Typical for apache2"
     )
     server_log_file_name: str = Field(default="server.log", description="File name to write server logs to")
-    device_log_file_name: str = Field(default="device.log", description="File name to write device logs to")
     image_name: str = Field(default="dashboard.png", description="Image name, if writing as file")
 
 
@@ -136,17 +135,3 @@ class AppConfig(BaseModel):
         openweather_key = os.environ.get("OPENWEATHERMAP_API_KEY")
         if openweather_key and "weather" in config_dict:
             config_dict["weather"]["api_key"] = openweather_key
-
-    # Legacy compatibility method - can be removed after migration
-    @property
-    def api_keys(self) -> dict[str, SecretStr]:
-        """
-        Legacy compatibility for api_keys access.
-        Returns a dictionary of API keys for backward compatibility.
-        """
-        keys = {}
-        if self.tasks and self.tasks.api_key:
-            keys["todoist"] = self.tasks.api_key
-        if self.weather and self.weather.api_key:
-            keys["openweathermap"] = self.weather.api_key
-        return keys

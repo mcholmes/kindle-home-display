@@ -5,7 +5,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Response
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.config import AppConfig
@@ -28,23 +28,6 @@ class App:
         app = cls(config)
         app.configure_routes()
         return app
-
-    def get_logs(self, file_name) -> str:
-        logs = Path(self.config.server.server_dir) / file_name
-        try:
-            with Path.open(logs) as f:
-                output = f.read()
-        except FileNotFoundError:
-            output = f"No log file found at {logs}."
-
-        return output
-
-    def get_server_logs(self) -> str:
-        return self.get_logs(self.config.server.server_log_file_name)
-
-    def get_device_logs(self) -> str:
-        # TODO: this is unused for now. Implement a way for the device to send logs back to the server
-        return self.get_logs(self.config.server.device_log_file_name)
 
     def generate_image_and_save(self) -> None:
         events, current_date = self.get_dashboard_data()
@@ -71,13 +54,13 @@ class App:
 
         # Determine which data sources to fetch based on configuration
         data_sources = []
-        
+
         if self.config.tasks and self.config.tasks.api_key:
             data_sources.append(("tasks", self.get_tasks))
-            
+
         if self.config.calendar:
             data_sources.append(("appointments", self.get_appointments))
-            
+
         # Add weather fetching when implemented
         # if self.config.weather and self.config.weather.api_key:
         #     data_sources.append(("weather", self.get_weather))
@@ -87,7 +70,7 @@ class App:
 
         # Fetch data in parallel with error handling
         all_events = []
-        
+
         if data_sources:
             with ThreadPoolExecutor(max_workers=len(data_sources)) as executor:
                 # Submit all tasks
@@ -95,7 +78,7 @@ class App:
                     executor.submit(self._fetch_with_error_handling, source_name, fetch_func, current_date): source_name
                     for source_name, fetch_func in data_sources
                 }
-                
+
                 # Collect results as they complete
                 for future in wait(future_to_source.keys()).done:
                     source_name = future_to_source[future]
@@ -164,7 +147,7 @@ class App:
         # Use calendar days_to_show if available, otherwise default to 2 days
         days_to_show = self.config.calendar.days_to_show if self.config.calendar else 2
         date_end = current_date + timedelta(days=days_to_show)
-        
+
         logger.debug("Fetching tasks from Todoist for project %s until %s", config.project_id, date_end.date())
         return get_tasks_todoist(api_key=config.api_key, project_id=config.project_id, date_end=date_end)
 
@@ -180,7 +163,7 @@ class App:
         end_date = start_date + timedelta(days=config.days_to_show)
 
         logger.debug("Fetching calendar events from %s to %s", start_date.date(), end_date.date())
-        
+
         # Use GCal directly instead of the redundant Calendar wrapper
         gcal = GCal(config.creds)
         return gcal.get_events(
@@ -207,27 +190,12 @@ class App:
             )
 
         self.router.add_api_route(
-            "/logs/server",
-            response_class=PlainTextResponse,
-            endpoint=self.get_server_logs,
-            methods=["GET"],
-            )
-
-        self.router.add_api_route(
-            "/logs/device",
-            response_class=PlainTextResponse,
-            endpoint=self.get_device_logs,
-            methods=["GET"],
-            )
-
-        self.router.add_api_route(
             "/health",
             endpoint=self.health_check,
             methods=["GET"],
             )
 
         logger.debug("Started server.")
-        # TODO: add a POST for device to send its logs back to server
 
     def root(self) -> str:
         return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."

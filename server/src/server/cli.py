@@ -5,7 +5,7 @@ from typing import Annotated
 
 from typer import Context, Option, Typer
 
-from server.app import App, AppServer
+from server.app import App
 from server.config import AppConfig
 
 cli = Typer(add_completion=False)
@@ -62,7 +62,7 @@ def start(ctx: Context):
     from fastapi import FastAPI
     from fastapi_radar import Radar
 
-    app: AppServer = AppServer(ctx.obj.config)
+    app = App.create_server(ctx.obj.config)
     f = FastAPI()
     f.include_router(app.router)
 

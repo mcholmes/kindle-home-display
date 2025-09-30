@@ -8,8 +8,8 @@ from fastapi import APIRouter, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
-from server.calendar_plugins.gcal import GCal
 from server.config import AppConfig
+from server.gcal import GCal
 from server.render import Renderer
 from server.todoist import get_tasks_todoist
 
@@ -17,9 +17,17 @@ logger = logging.getLogger(__name__)
 
 class App:
     config: AppConfig
+    router: APIRouter | None = None
 
     def __init__(self, config: AppConfig):
         self.config = config
+
+    @classmethod
+    def create_server(cls, config: AppConfig) -> "App":
+        """Create an App instance configured for server mode with web routes."""
+        app = cls(config)
+        app.configure_routes()
+        return app
 
     def get_logs(self, file_name) -> str:
         logs = Path(self.config.server.server_dir) / file_name
@@ -53,36 +61,74 @@ class App:
         return Response(content=image, media_type="image/png")
 
     def get_dashboard_data(self) -> tuple[dict[list[Activity]], datetime]:
-        # list timezones: print(zoneinfo.available_timezones())
-        display_timezone = ZoneInfo(self.config.calendar.display_timezone)
+        """
+        Fetch data from all configured sources in parallel with error handling.
+        Only fetches from sources that are properly configured.
+        """
+        # Get current time in display timezone
+        display_timezone = ZoneInfo(self.config.calendar.display_timezone if self.config.calendar else "UTC")
         current_date = datetime.now(display_timezone)
 
-        logger.debug("Getting data in parallel...")
+        # Determine which data sources to fetch based on configuration
+        data_sources = []
+        
+        if self.config.tasks and self.config.tasks.api_key:
+            data_sources.append(("tasks", self.get_tasks))
+            
+        if self.config.calendar:
+            data_sources.append(("appointments", self.get_appointments))
+            
+        # Add weather fetching when implemented
+        # if self.config.weather and self.config.weather.api_key:
+        #     data_sources.append(("weather", self.get_weather))
 
-        with ThreadPoolExecutor() as executor:
-            future_tasks = executor.submit(
-                self.get_tasks, current_date
-            )  # TODO: make this optional depending on config.toml
-            future_appointments = executor.submit(self.get_appointments, current_date)
+        source_names = [name for name, _ in data_sources]
+        logger.debug("Fetching data from %d sources: %s", len(data_sources), source_names)
 
-            # Wait for both API calls to complete
-            wait([future_tasks, future_appointments])
+        # Fetch data in parallel with error handling
+        all_events = []
+        
+        if data_sources:
+            with ThreadPoolExecutor(max_workers=len(data_sources)) as executor:
+                # Submit all tasks
+                future_to_source = {
+                    executor.submit(self._fetch_with_error_handling, source_name, fetch_func, current_date): source_name
+                    for source_name, fetch_func in data_sources
+                }
+                
+                # Collect results as they complete
+                for future in wait(future_to_source.keys()).done:
+                    source_name = future_to_source[future]
+                    try:
+                        events = future.result()
+                        all_events.extend(events)
+                        logger.debug("Successfully fetched %d events from %s", len(events), source_name)
+                    except (RuntimeError, ValueError, ConnectionError):
+                        logger.exception("Failed to fetch data from %s", source_name)
+                        # Continue with other sources - graceful degradation
+        else:
+            logger.warning("No data sources configured or available")
 
-            tasks = future_tasks.result()
-            appointments = future_appointments.result()
+        # Process and filter events
+        events_filtered = [event for event in all_events if not event.ended_over_an_hour_ago]
+        events_grouped = group_events_by_relative_day(events=events_filtered, current_date=current_date)
 
-        events_unsorted = tasks + appointments
-        events_filtered = [event for event in events_unsorted if not event.ended_over_an_hour_ago]
-        events = group_events_by_relative_day(events=events_filtered, current_date=current_date)
+        total_events = sum(len(events_grouped[day]) for day in events_grouped)
+        logger.info("Retrieved %d events across %d days", total_events, len(events_grouped))
 
-        count_events = 0
-        for day in events:
-            count_events += len(events[day])
+        return events_grouped, current_date
 
-        log_msg = f"Retrieved {count_events} events across {len(events)} days"
-        logger.debug(log_msg)
-
-        return events, current_date
+    def _fetch_with_error_handling(self, source_name: str, fetch_func, current_date: datetime) -> list[Activity]:
+        """
+        Wrapper to fetch data from a source with error handling and timeout.
+        Returns empty list on error to allow graceful degradation.
+        """
+        try:
+            logger.debug("Fetching data from %s...", source_name)
+            return fetch_func(current_date)
+        except (RuntimeError, ValueError, ConnectionError):
+            logger.exception("Error fetching from %s", source_name)
+            return []  # Graceful degradation - return empty list
 
     def generate_image(self, events: dict[list[Activity]], current_date: datetime) -> bytes:
         events_today = sort_by_time(events.get(0, []))
@@ -109,23 +155,32 @@ class App:
         return r.get_png()
 
     def get_tasks(self, current_date: datetime) -> list[Activity]:
+        """Fetch tasks from Todoist API."""
         config = self.config.tasks
         if not config or not config.api_key:
+            logger.debug("Todoist not configured, skipping tasks")
             return []
 
-        project_id = config.project_id
-        date_end = current_date + timedelta(days=self.config.calendar.days_to_show)
-        return get_tasks_todoist(api_key=config.api_key, project_id=project_id, date_end=date_end)
+        # Use calendar days_to_show if available, otherwise default to 2 days
+        days_to_show = self.config.calendar.days_to_show if self.config.calendar else 2
+        date_end = current_date + timedelta(days=days_to_show)
+        
+        logger.debug("Fetching tasks from Todoist for project %s until %s", config.project_id, date_end.date())
+        return get_tasks_todoist(api_key=config.api_key, project_id=config.project_id, date_end=date_end)
 
     def get_appointments(self, current_date: datetime) -> list[Activity]:
+        """Fetch calendar events from Google Calendar API."""
         config = self.config.calendar
         if not config:
+            logger.debug("Calendar not configured, skipping appointments")
             return []
 
-        # Calculate date range (same logic that was in Calendar class)
+        # Calculate date range
         start_date = datetime.combine(current_date.date(), time.min)  # midnight today
         end_date = start_date + timedelta(days=config.days_to_show)
 
+        logger.debug("Fetching calendar events from %s to %s", start_date.date(), end_date.date())
+        
         # Use GCal directly instead of the redundant Calendar wrapper
         gcal = GCal(config.creds)
         return gcal.get_events(
@@ -135,26 +190,8 @@ class App:
             exclude_default_calendar=False,
         )
 
-    def get_weather():
-        ...
-        # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-        # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
-        # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-        # owmModule = OWMModule(owm_api_key)
-        # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, from_cache=True)
-        # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
-        # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-        # # current_weather_temp=round(hourly_forecast[1]["temp"]),
-
-class AppServer(App):
-
-    router: APIRouter = APIRouter()
-
-    def __init__(self, config: AppConfig):
-        self.config = config
-        self.configure_routes()
-
     def configure_routes(self):
+        """Configure FastAPI routes for server mode."""
         self.router = APIRouter()
         self.router.add_api_route(
             "/",

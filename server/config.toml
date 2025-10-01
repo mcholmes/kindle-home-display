@@ -1,6 +1,4 @@
 [server]
-host = "0.0.0.0"  # Listen on all interfaces (works for both local and Docker)
-port = 8000
 server_dir = "./data/"  # Use relative path that works in both environments
 
 [image]
@@ -15,9 +13,7 @@ creds = "./credentials_service.json"  # Use relative path that works in both env
 
 [tasks]
 project_id = "6MmR9G3CcW4VF27h"
-# API key should be set via TODOIST_API_KEY environment variable
 
 # [weather]
 # latitude = 51.5074
 # longitude = -0.1278
-# API key should be set via OPENWEATHERMAP_API_KEY environment variable

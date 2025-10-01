@@ -8,8 +8,6 @@ The server component of the Kindle Home Display is configured using a TOML file 
 
 ```toml
 [server]
-host = "127.0.0.1"      # The IP address to bind the server to
-port = 8000             # The port to run the server on
 server_dir = "/path/to/server/"  # Directory where the server stores its files
 ```
 
@@ -60,15 +58,13 @@ project_id = 1234567890  # Todoist project ID to display tasks from
 
 ### Todoist
 
-- You need a Todoist API key (stored in `api_keys.json`)
+- You need a Todoist API key
 - Project ID can be found in the URL when viewing a project in Todoist web interface
 
 ## Example Configuration
 
 ```toml
 [server]
-host = "127.0.0.1"
-port = 8000
 server_dir = "/var/www/kindle-dashboard/"
 
 [image]
@@ -85,5 +81,5 @@ ids = {
 creds = "/path/to/credentials_service.json"
 
 [tasks]
-project_id = 2306241165
+project_id = 1234567890
 ```

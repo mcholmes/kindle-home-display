@@ -431,7 +431,7 @@ wheels = [
 [[package]]
 name = "kindle-home-display-server"
 version = "0.6.1"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard-no-fastapi-cloud-cli"] },
     { name = "fastapi-radar" },

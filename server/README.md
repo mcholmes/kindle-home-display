@@ -6,7 +6,6 @@ A FastAPI server that collects data from various APIs (calendar, tasks, weather)
   - [Quick Start with Docker (Recommended)](#quick-start-with-docker-recommended)
   - [Development Setup](#development-setup)
   - [Usage](#usage)
-    - [Command Line Interface](#command-line-interface)
     - [Docker Usage](#docker-usage)
   - [Configuration](#configuration)
   - [API Endpoints](#api-endpoints)
@@ -62,27 +61,6 @@ kindle-server --log-to-console start
 ```
 
 ## Usage
-
-### Command Line Interface
-
-The server provides a `kindle-server` console command with the following options:
-
-```shell
-# Start the server
-kindle-server start
-
-# Start with console logging
-kindle-server --log-to-console start
-
-# Run once to generate image without starting server
-kindle-server once
-
-# View server logs
-kindle-server logs
-
-# Get help
-kindle-server --help
-```
 
 ### Docker Usage
 

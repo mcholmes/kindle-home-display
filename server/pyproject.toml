@@ -22,9 +22,6 @@ dependencies = [
   "fastapi-radar>=0.1.9",
 ]
 
-[tool.uv]
-package = true # required for scripts entry points
-
 [tool.coverage.run]
 source_pkgs = ["server"] #, "tests"]
 branch = true

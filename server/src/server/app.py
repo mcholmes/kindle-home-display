@@ -198,7 +198,7 @@ class App:
         logger.debug("Started server.")
 
     def root(self) -> str:
-        return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
+        return "For docs on how to use this API, go to /docs."
 
     def health_check(self) -> dict[str, str]:
         """Health check endpoint for Docker health checks and monitoring."""

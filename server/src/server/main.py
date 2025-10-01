@@ -9,8 +9,6 @@ Run with:
 Configuration via environment variables:
     - TODOIST_API_KEY: Your Todoist API key
     - OPENWEATHERMAP_API_KEY: Your OpenWeatherMap API key
-    - SERVER_HOST: Server host (default: 127.0.0.1)
-    - SERVER_PORT: Server port (default: 8080)
     - LOG_LEVEL: Logging level (default: INFO)
     - CONFIG_DIR: Directory containing config.toml (default: current dir)
 """
@@ -19,7 +17,6 @@ import logging
 import os
 from pathlib import Path
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi_radar import Radar
 
@@ -94,24 +91,10 @@ def create_app() -> FastAPI:
     )
     radar.create_tables()
 
-    logger.info(f"Server initialized on {config.server.host}:{config.server.port}")
+    logger.info("Server initialized")
 
     return app
 
 
 # Create app instance for uvicorn/fastapi
 app = create_app()
-
-
-if __name__ == "__main__":
-    # Load config for CLI usage
-    config_dir = Path(os.environ.get("CONFIG_DIR", "."))
-    config = AppConfig.from_dir(config_dir)
-
-    uvicorn.run(
-        "server.main:app",
-        host=str(config.server.host),
-        port=config.server.port,
-        reload=True,
-        log_level="info",
-    )

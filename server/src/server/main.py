@@ -17,8 +17,10 @@ import logging
 import os
 from pathlib import Path
 
+import uvicorn
+
+# from fastapi_radar import Radar
 from fastapi import FastAPI
-from fastapi_radar import Radar
 
 from server.app import App
 from server.config import AppConfig
@@ -78,18 +80,18 @@ def create_app() -> FastAPI:
     # Include routes
     app.include_router(app_instance.router)
 
-    # Setup monitoring with FastAPI Radar
-    radar_db_path = Path(config.server.server_dir) / "radar.duckdb"
-    radar = Radar(
-        app,
-        max_requests=1000,
-        retention_hours=240,
-        slow_query_threshold=1000,
-        exclude_paths=["/health"],
-        theme="auto",
-        db_path=str(radar_db_path),
-    )
-    radar.create_tables()
+    # # Setup monitoring with FastAPI Radar
+    # radar_db_path = Path(config.server.server_dir) / "radar.duckdb"
+    # radar = Radar(
+    #     app,
+    #     max_requests=1000,
+    #     retention_hours=240,
+    #     slow_query_threshold=1000,
+    #     exclude_paths=["/health"],
+    #     theme="auto",
+    #     db_path=str(radar_db_path),
+    # )
+    # radar.create_tables()
 
     logger.info("Server initialized")
 
@@ -98,3 +100,6 @@ def create_app() -> FastAPI:
 
 # Create app instance for uvicorn/fastapi
 app = create_app()
+
+if __name__ == "__main__":
+    uvicorn.run(app=app)

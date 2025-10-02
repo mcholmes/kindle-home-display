@@ -7,14 +7,53 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-# Python development tasks (using uv run)
-server:
-	uv sync --no-dev
+# Development
+run-dev:
+	uv sync
 	fastapi run src/server/main.py --host 0.0.0.0 --port 8000
 
-generate-image: ## Generate dashboard image once
-	uv run python generate_image.py
+# Build & version management
+bump-patch:
+	uv version --bump patch
 
+bump-minor:
+	uv version --bump minor
+
+bump-major:
+	uv version --bump major
+
+build:
+	uv build --wheel
+
+clean: ## Clean up generated files
+	rm -rf .coverage
+	rm -rf .mypy_cache
+	rm -rf .pytest_cache
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info/
+	find . -type d -name __pycache__ -exec rm -rf {} +
+	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.pyo" -delete
+
+# Deployment
+PI_HOST=rpi@raspberrypi.local
+PI_DIR=/home/rpi/server
+CRED_FILES=config.toml credentials_service.json .env
+
+copy-package:
+	scp dist/*.whl $(PI_HOST):$(PI_DIR)
+
+copy-creds:
+	scp $(CRED_FILES) $(PI_HOST):$(PI_DIR)/
+
+install-remote:
+	ssh $(PI_HOST) "cd $(PI_DIR) && uv venv && source .venv/bin/activate && uv pip install --upgrade server-*.whl"
+
+deploy: copy-package copy-creds install-remote
+
+
+# Testing
 test: ## Run tests with pytest
 	uv run pytest tests
 
@@ -47,13 +86,3 @@ format-check: ## Check code formatting
 profile: ## Run performance profiling  
 	PYTHONPATH=src uv run python -m cProfile -o program.prof -m server.main $(ARGS) && uv run tuna program.prof
 
-clean: ## Clean up generated files
-	rm -rf .coverage
-	rm -rf .mypy_cache
-	rm -rf .pytest_cache
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete

@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 
 import uvicorn
+from dotenv import load_dotenv
 
 # from fastapi_radar import Radar
 from fastapi import FastAPI
@@ -80,7 +81,7 @@ def create_app() -> FastAPI:
     # Include routes
     app.include_router(app_instance.router)
 
-    # # Setup monitoring with FastAPI Radar
+    # # Setup monitoring with FastAPI Radar - doesn't work on Raspberry Pi 2B (32bit ARMv7)
     # radar_db_path = Path(config.server.server_dir) / "radar.duckdb"
     # radar = Radar(
     #     app,
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
 
     return app
 
+load_dotenv()  # This loads variables from .env into os.environ
 
 # Create app instance for uvicorn/fastapi
 app = create_app()

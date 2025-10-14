@@ -56,9 +56,11 @@ class App:
         data_sources = []
 
         if self.config.tasks and self.config.tasks.api_key:
+            logger.debug("Todoist configured, adding tasks data source")
             data_sources.append(("tasks", self.get_tasks))
 
         if self.config.calendar:
+            logger.debug("Calendar configured, adding appointments data source")
             data_sources.append(("appointments", self.get_appointments))
 
         # Add weather fetching when implemented
@@ -164,13 +166,11 @@ class App:
 
         logger.debug("Fetching calendar events from %s to %s", start_date.date(), end_date.date())
 
-        # Use GCal directly instead of the redundant Calendar wrapper
         gcal = GCal(config.creds)
         return gcal.get_events(
             date_from=start_date,
             date_to=end_date,
-            additional_calendars=list(config.ids.values()),
-            exclude_default_calendar=False,
+            calendars=list(config.ids.values())
         )
 
     def configure_routes(self):

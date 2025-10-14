@@ -45,6 +45,7 @@ class Activity(BaseModel):
         description: str | None = None,
         location: str | None = None,
     ):
+
         return cls(
             activity_type=activity_type,
             date_start=datetime_to_date(datetime_start),

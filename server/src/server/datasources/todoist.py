@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import SecretStr
 from todoist_api_python.api import TodoistAPI
@@ -45,7 +45,17 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: datetime) -
         raise
 
     def include_task(due: Due | None) -> bool:
-        return due is not None and due.date <= date_end.date()
+        if due is None:
+            return False
+
+        if isinstance(due.date, datetime):
+            dt: datetime = due.date
+            return dt.date() <= date_end.date()
+        elif isinstance(due.date, date):
+            return due.date <= date_end.date()
+        else:
+            error = f"Unknown due date type: {type(due.date)}"
+            raise ValueError(error)
 
     tasks_due: list[Task] = filter(lambda x: include_task(x.due), tasks)
 

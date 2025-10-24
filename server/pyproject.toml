@@ -1,6 +1,6 @@
 [project]
 name = "server"
-version = "0.6.3"
+version = "0.7.1"
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
 requires-python = "~=3.13.0"

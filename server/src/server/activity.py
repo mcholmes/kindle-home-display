@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import date, time
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import pendulum
 from pydantic import BaseModel, ValidationInfo, field_validator
@@ -14,11 +14,11 @@ class Activity(BaseModel):
     activity_type: Literal['event', 'task']
     summary: str
     date_start: date
-    date_end: Optional[date] = None  # if none then all-day. if > start_date, then multi-day
-    time_start: Optional[time] = None  # if none then all-day. if populated without end time, then it's a point in time
-    time_end: Optional[time] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
+    date_end: date | None = None  # if none then all-day. if > start_date, then multi-day
+    time_start: time | None = None  # if none then all-day. if populated without end time, then it's a point in time
+    time_end: time | None = None
+    description: str | None = None
+    location: str | None = None
 
     @field_validator('time_end')
     def validate_time_end(cls, time_end, info: ValidationInfo):  # noqa: N805
@@ -41,10 +41,10 @@ class Activity(BaseModel):
         cls,
         activity_type: str,
         summary: str,
-        datetime_start: Union[pendulum.DateTime, date],
-        datetime_end: Optional[Union[pendulum.DateTime, date]] = None,
-        description: Optional[str] = None,
-        location: Optional[str] = None,
+        datetime_start: pendulum.DateTime | date,
+        datetime_end: pendulum.DateTime | date | None = None,
+        description: str | None = None,
+        location: str | None = None,
     ):
         return cls(
             activity_type=activity_type,
@@ -93,13 +93,13 @@ class Activity(BaseModel):
     def time_end_short(self) -> str:
         return calculate_short_time(self.time_end)
 
-    def get_relative_days_start(self, date_to_compare: Union[pendulum.DateTime, date]):
+    def get_relative_days_start(self, date_to_compare: pendulum.DateTime | date):
         # Multi-day events which start before the comparison date will return a negative value
         delta = self.date_start - datetime_to_date(date_to_compare)
         return delta.days
 
 
-def datetime_to_time(dt: Union[pendulum.DateTime, date]) -> Optional[time]:
+def datetime_to_time(dt: pendulum.DateTime | date) -> time | None:
 
     if dt is None:
         return None
@@ -118,7 +118,7 @@ def datetime_to_time(dt: Union[pendulum.DateTime, date]) -> Optional[time]:
     err = f"Input must be of type datetime or date, not {type(dt)}"
     raise TypeError(err)
 
-def datetime_to_date(dt: Union[pendulum.DateTime, date]) -> Optional[date]:
+def datetime_to_date(dt: pendulum.DateTime | date) -> date | None:
     """
     This is tricky because of how the standard library treats dates and datetimes.
     See https://github.com/python/mypy/issues/9015
@@ -146,7 +146,7 @@ def datetime_to_date(dt: Union[pendulum.DateTime, date]) -> Optional[date]:
     err = "Input is not a datetime or date: {dt}"
     raise TypeError(err)
 
-def calculate_short_time(dt_object: Union[pendulum.DateTime, time]) -> Optional[str]:
+def calculate_short_time(dt_object: pendulum.DateTime | time) -> str | None:
     if dt_object is None:
         return None
 
@@ -173,7 +173,7 @@ def sort_by_time(events: list[Activity]):
     return sorted(events, key=lambda x: x.time_start or time.min)
 
 def group_events_by_relative_day(
-    events: list[Activity], current_date: Union[pendulum.DateTime, date],
+    events: list[Activity], current_date: pendulum.DateTime | date,
 ) -> dict[int, list[Activity]]:
         """
         :return: a dict of (lists of events for a day). key=0 is today, key=1 is tomorrow, etc.

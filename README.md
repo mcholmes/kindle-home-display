@@ -3,7 +3,7 @@
 ## Description
 
 This project repurposes a Kindle as a home display that can go several weeks without charging.
-It's implemented in Python 3.9 due to that being natively available on a Raspberry Pi 2.
+It requires Python 3.11+ and is designed to run on a Raspberry Pi.
 
 :warning: TODO: picture of the dashboard
 

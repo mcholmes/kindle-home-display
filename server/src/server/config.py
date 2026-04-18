@@ -1,10 +1,10 @@
 import json
+import tomllib
 from collections.abc import Iterator
 from ipaddress import IPv4Address
 from pathlib import Path
-from typing import Optional
+from typing import Self
 
-import toml
 import yaml
 from pydantic import BaseModel, Field, SecretStr
 
@@ -80,19 +80,20 @@ def get_dict_from_file(file_path: Path) -> dict:
         raise IsADirectoryError
 
     extension = str.lower(file_path.suffix)
-    if extension not in [".json", ".yml", ".yaml", ".toml"]:
-        err = f"Unsupported file type: {extension}. Valid types are yml/yaml, json and toml."
-        raise TypeError(err)
 
-    with Path.open(file_path) as f:
-        if extension in [".yml", ".yaml"]:
-            output = yaml.safe_load(f)
-        elif extension == ".json":
-            output = json.load(f)
-        else:
-            output = toml.load(f)
-
-        return output
+    match extension:
+        case ".toml":
+            with Path.open(file_path, "rb") as f:
+                return tomllib.load(f)
+        case ".yml" | ".yaml":
+            with Path.open(file_path) as f:
+                return yaml.safe_load(f)
+        case ".json":
+            with Path.open(file_path) as f:
+                return json.load(f)
+        case _:
+            err = f"Unsupported file type: {extension}. Valid types are yml/yaml, json and toml."
+            raise TypeError(err)
 
 class ServerConfig(BaseModel):
     host: IPv4Address = Field(
@@ -138,13 +139,13 @@ class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a 
     server: ServerConfig
     image: ImageConfig
 
-    api_keys: Optional[dict[str, SecretStr]] = None
-    calendar: Optional[CalendarConfig] = None
-    weather: Optional[WeatherConfig] = None
-    tasks: Optional[TasksConfig] = None
+    api_keys: dict[str, SecretStr] | None = None
+    calendar: CalendarConfig | None = None
+    weather: WeatherConfig | None = None
+    tasks: TasksConfig | None = None
 
     @classmethod
-    def from_dir(cls, directory: Path):
+    def from_dir(cls, directory: Path) -> Self:
         """
         Load configuration from a directory.
 
@@ -177,7 +178,7 @@ class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a 
         return cls.from_dicts(config_dict, api_keys_dict)
 
     @classmethod
-    def from_dicts(cls, config: dict, api_keys: Optional[dict[str, SecretStr]] = None):
+    def from_dicts(cls, config: dict, api_keys: dict[str, SecretStr] | None = None) -> Self:
         """
         Instantiate this class and its fields from a dictionary, and an optional dictionary of API keys.
         Any unrecognised fields in the config will be ignored.

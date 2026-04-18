@@ -3,9 +3,7 @@ import logging
 
 # if TYPE_CHECKING:
 import pendulum
-from os import listdir
 from pathlib import Path
-from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
@@ -40,7 +38,7 @@ class Font:
     def width(self, text: str) -> int:
         return self._font.getbbox(text)[2]
 
-    def height(self, text: Optional[str] = None) -> int:
+    def height(self, text: str | None = None) -> int:
         if text is None:
             return self._height
 
@@ -54,7 +52,7 @@ class Font:
         position: tuple,
         text: str,
         colour: str = "black",
-        anchor: Optional[str] = None,
+        anchor: str | None = None,
     ) -> None:
         self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
 
@@ -66,8 +64,8 @@ class FontFactory:
     def __init__(
         self,
         draw: ImageDraw,
-        font_dir: Optional[Path] = None,
-        font_map: Optional[dict[str]] = None,
+        font_dir: Path | None = None,
+        font_map: dict[str] | None = None,
     ):
         self.default_size = 48
 
@@ -80,7 +78,7 @@ class FontFactory:
         if font_map is None:
             # Just use the file names as the alias
             self.font_map = {
-                file: file for file in listdir(self.font_dir) if file.endswith(".ttf")
+                f.name: f.name for f in self.font_dir.iterdir() if f.suffix == ".ttf"
             }
         else:
             self.font_map = font_map
@@ -96,7 +94,7 @@ class FontFactory:
         #         "weather": "weathericons-regular-webfont.ttf"
         # }
 
-    def get(self, name: str, size: Optional[int] = None):
+    def get(self, name: str, size: int | None = None):
         if size is None:
             size = self.default_size
 
@@ -185,7 +183,7 @@ class Renderer(BaseModel):
         return text[: left - 1] + "..."
 
     def render_single_activity(
-        self, position: tuple[int], activity_text: str, bullet: str, font: Font, prefix: Optional[str] = None
+        self, position: tuple[int], activity_text: str, bullet: str, font: Font, prefix: str | None = None
     ):
         """
         Writes a bullet-point, some grey text (prefix), then some black text (activity_text).

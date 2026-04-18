@@ -24,10 +24,10 @@ perf = "python -mcProfile -o program.prof src/server/__main__.py {args} && tuna 
 
 [envs.py39]
 template = "default"
-python = "3.9"
+python = "3.11"
 
 [[envs.all.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12"]
+python = ["3.11", "3.12", "3.13"]
 
 [build]
 exclude = [

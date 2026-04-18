@@ -36,7 +36,7 @@ Rust binary (`next-wakeup`) cross-compiles to `armv7-unknown-linux-musleabi` usi
 
 ## Key constraints
 
-- **Python 3.9 minimum** -- targets Raspberry Pi 2's native Python. `keep-runtime-typing = true` preserves runtime type annotations for Pydantic/FastAPI.
+- **Python 3.11 minimum** -- targets Raspberry Pi. Use modern syntax: `X | Y` union types (not `Optional`/`Union`), `match/case`, `tomllib` (not the `toml` package), `Self` return types on classmethods.
 - **Use pendulum for all datetime logic** -- the server uses `pendulum` (not stdlib `datetime`) for timezone handling, date arithmetic, and formatting. Use `pendulum.now()`, `pendulum.datetime()`, `.add()`, `.subtract()`, `.start_of()`, `.format()` etc. The `Activity` model stores stdlib `date` and `time` fields for Pydantic, but all construction and manipulation should go through pendulum. External libraries (e.g. `gcsa`) may still return stdlib `datetime` objects -- the `datetime_to_date`/`datetime_to_time` helpers in `activity.py` handle both types.
 - **Shell scripts target BusyBox ash**, not bash. ShellCheck config: `shell=busybox`. Do not use bash-only syntax.
 - **Ruff config is extensive** -- `ruff_defaults.toml` (534 lines) is extended by `pyproject.toml` which adds `PTH` rules (prefer `pathlib` over `os.path`). Relative imports are banned.

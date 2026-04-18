@@ -1,9 +1,8 @@
 import logging
 from pathlib import Path
-from typing import Union
 
 import pendulum
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, ConfigDict, PositiveInt
 
 from server.activity import Activity
 from server.calendar_plugins.gcal import GCal
@@ -17,14 +16,13 @@ class Calendar(BaseModel):
     The current calendar provider is Google Calendar, but this is pluggable.
     """
 
-    credentials: Union[Path, str]
-    calendar_ids: Union[str, list[str]]
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    credentials: Path | str
+    calendar_ids: str | list[str]
     current_date: pendulum.DateTime
     days_to_show: PositiveInt = 2
     exclude_default_calendar: bool = False
-
-    class Config:
-        arbitrary_types_allowed = True
 
     @property
     def start_date(self) -> pendulum.DateTime:

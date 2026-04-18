@@ -1,7 +1,7 @@
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, cast
 
+import pendulum
 from pydantic import SecretStr
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Due
@@ -10,13 +10,13 @@ from server.activity import Activity
 
 logger = logging.getLogger(__name__)
 
-def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: datetime) -> list[Activity]:
+def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: pendulum.DateTime) -> list[Activity]:
 
     """
     Returns all tasks within a given Project before the specified end date (i.e. includes overdue tasks).
     """
 
-    tz: timezone = date_end.tzinfo
+    tz = date_end.timezone
 
     api = TodoistAPI(api_key.get_secret_value())
 
@@ -36,7 +36,10 @@ def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: datetime) -
         raise
 
     def include_task(due: Optional[Due]) -> bool:
-        return due is not None and datetime.fromisoformat(due.date).replace(tzinfo=tz) <= date_end
+        if due is None:
+            return False
+        parsed = cast(pendulum.DateTime, pendulum.parse(due.date, tz=tz))
+        return parsed <= date_end
 
     tasks_due = filter(lambda x: include_task(x.due), tasks)
 
@@ -46,18 +49,22 @@ def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: datetime) -
 
     logger.debug("Constructing activity list from tasks...")
     for task in tasks_due:
-        # task_id = task.id
-        # priority = task.priority
         assignee_str = "" if task.assignee_id is None else f" [{my_collaborators.get(task.assignee_id)}]"
         summary = task.content + assignee_str
         desc = task.description
-        # due = task.due.date if task.due.datetime is None else task.due.datetime
+
+        date_start = cast(pendulum.DateTime, pendulum.parse(task.due.date))
+        time_start = (
+            cast(pendulum.DateTime, pendulum.parse(task.due.datetime)).time()
+            if task.due.datetime is not None
+            else None
+        )
 
         e = Activity(
             activity_type="task",
             summary=summary,
-            date_start=datetime.fromisoformat(task.due.date),
-            time_start=datetime.fromisoformat(task.due.datetime).time() if task.due.datetime is not None else None,
+            date_start=date_start.date(),
+            time_start=time_start,
             description=desc
         )
         my_tasks.append(e)

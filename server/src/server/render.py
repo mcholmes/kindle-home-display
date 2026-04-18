@@ -2,7 +2,7 @@ import io
 import logging
 
 # if TYPE_CHECKING:
-from datetime import datetime
+import pendulum
 from os import listdir
 from pathlib import Path
 from typing import Optional
@@ -346,16 +346,16 @@ class Renderer(BaseModel):
 
     def render_all(
         self,
-        todays_date: datetime,
+        todays_date: pendulum.DateTime,
         events_today: list[Activity],
         events_tomorrow: list[Activity],
         weather = None
     ) -> None:
         # Render top row
-        day = todays_date.strftime("%-d")
-        day_of_week = todays_date.strftime("%a")
-        month = todays_date.strftime("%b")
-        time = todays_date.strftime("%H:%M")
+        day = todays_date.format("D")
+        day_of_week = todays_date.format("ddd")
+        month = todays_date.format("MMM")
+        time = todays_date.format("HH:mm")
         self.render_date(day, day_of_week, month)
         # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 

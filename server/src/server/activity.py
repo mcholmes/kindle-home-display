@@ -1,7 +1,8 @@
 from collections import defaultdict
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, time
 from typing import Literal, Optional, Union
 
+import pendulum
 from pydantic import BaseModel, ValidationInfo, field_validator
 
 
@@ -40,8 +41,8 @@ class Activity(BaseModel):
         cls,
         activity_type: str,
         summary: str,
-        datetime_start: datetime,
-        datetime_end: Optional[datetime] = None,
+        datetime_start: Union[pendulum.DateTime, date],
+        datetime_end: Optional[Union[pendulum.DateTime, date]] = None,
         description: Optional[str] = None,
         location: Optional[str] = None,
     ):
@@ -58,12 +59,12 @@ class Activity(BaseModel):
 
     @property
     def ends_today(self) -> bool:
-        today = datetime.now(tz=timezone.utc).date()
+        today = pendulum.today().date()
         return (self.date_end is None and self.date_start == today) or self.date_end == today
 
     @property
     def ended_over_an_hour_ago(self) -> bool:
-        hour_ago = (datetime.now(tz=timezone.utc) - timedelta(hours=1)).time()
+        hour_ago = pendulum.now().subtract(hours=1).time()
 
         return self.ends_today and not self.is_all_day and (
             (self.time_end is not None and self.time_end <= hour_ago) or
@@ -92,17 +93,22 @@ class Activity(BaseModel):
     def time_end_short(self) -> str:
         return calculate_short_time(self.time_end)
 
-    def get_relative_days_start(self, date_to_compare: datetime):
+    def get_relative_days_start(self, date_to_compare: Union[pendulum.DateTime, date]):
         # Multi-day events which start before the comparison date will return a negative value
         delta = self.date_start - datetime_to_date(date_to_compare)
         return delta.days
 
 
-def datetime_to_time(dt: Union[datetime, date]) -> time:
+def datetime_to_time(dt: Union[pendulum.DateTime, date]) -> Optional[time]:
 
     if dt is None:
         return None
 
+    if isinstance(dt, pendulum.DateTime):
+        return dt.time()
+
+    # stdlib datetime (e.g. from gcsa) -- must check before date since datetime is a subclass of date
+    from datetime import datetime
     if isinstance(dt, datetime):
         return dt.time()
 
@@ -112,7 +118,7 @@ def datetime_to_time(dt: Union[datetime, date]) -> time:
     err = f"Input must be of type datetime or date, not {type(dt)}"
     raise TypeError(err)
 
-def datetime_to_date(dt: Union[datetime, date]) -> date:
+def datetime_to_date(dt: Union[pendulum.DateTime, date]) -> Optional[date]:
     """
     This is tricky because of how the standard library treats dates and datetimes.
     See https://github.com/python/mypy/issues/9015
@@ -126,8 +132,12 @@ def datetime_to_date(dt: Union[datetime, date]) -> date:
     if dt is None:
         return None
 
+    if isinstance(dt, pendulum.DateTime):
+        return dt.date()
+
+    # stdlib datetime (e.g. from gcsa) -- must check before date since datetime is a subclass of date
+    from datetime import datetime
     if isinstance(dt, datetime):
-        # This has to come first in the check because isinstance(my_datetime, date) = True!
         return dt.date()
 
     if isinstance(dt, date):
@@ -136,10 +146,12 @@ def datetime_to_date(dt: Union[datetime, date]) -> date:
     err = "Input is not a datetime or date: {dt}"
     raise TypeError(err)
 
-def calculate_short_time(dt_object: Union[datetime, time]) -> str:
+def calculate_short_time(dt_object: Union[pendulum.DateTime, time]) -> Optional[str]:
     if dt_object is None:
         return None
-    if not isinstance(dt_object, (datetime, time)):
+
+    from datetime import datetime
+    if not isinstance(dt_object, (pendulum.DateTime, datetime, time)):
         err = f"Can't get short time from an object of type {type(dt_object)}"
         raise TypeError(err)
 
@@ -160,7 +172,9 @@ def calculate_short_time(dt_object: Union[datetime, time]) -> str:
 def sort_by_time(events: list[Activity]):
     return sorted(events, key=lambda x: x.time_start or time.min)
 
-def group_events_by_relative_day(events: list[Activity], current_date: datetime) -> dict[list[Activity]]:
+def group_events_by_relative_day(
+    events: list[Activity], current_date: Union[pendulum.DateTime, date],
+) -> dict[int, list[Activity]]:
         """
         :return: a dict of (lists of events for a day). key=0 is today, key=1 is tomorrow, etc.
 

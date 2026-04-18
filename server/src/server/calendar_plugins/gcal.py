@@ -1,9 +1,9 @@
 import logging
 import pickle
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
+import pendulum
 from gcsa.google_calendar import GoogleCalendar
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
@@ -135,8 +135,8 @@ class GCal:
     def query_events_api(
         self,
         calendar_id: Optional[str] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        date_from: Optional[pendulum.DateTime] = None,
+        date_to: Optional[pendulum.DateTime] = None,
     ) -> list[Activity]:
         """
         Queries a given calendar API and converts responses into Event class.
@@ -171,8 +171,8 @@ class GCal:
 
     def get_events(
         self,
-        date_from: datetime,
-        date_to: datetime,
+        date_from: pendulum.DateTime,
+        date_to: pendulum.DateTime,
         additional_calendars: Optional[Union[str, list]] = None,
         exclude_default_calendar: bool = False,  # noqa: FBT001, FBT002
     ) -> list[Activity]:

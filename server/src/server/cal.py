@@ -1,8 +1,8 @@
 import logging
-from datetime import datetime, time, timedelta
 from pathlib import Path
 from typing import Union
 
+import pendulum
 from pydantic import BaseModel, PositiveInt
 
 from server.activity import Activity
@@ -19,17 +19,20 @@ class Calendar(BaseModel):
 
     credentials: Union[Path, str]
     calendar_ids: Union[str, list[str]]
-    current_date: datetime
+    current_date: pendulum.DateTime
     days_to_show: PositiveInt = 2
     exclude_default_calendar: bool = False
 
-    @property
-    def start_date(self) -> datetime:
-        return datetime.combine(self.current_date, time.min)  # midnight today
+    class Config:
+        arbitrary_types_allowed = True
 
     @property
-    def end_date(self) -> datetime:
-        return self.start_date + timedelta(days=self.days_to_show)
+    def start_date(self) -> pendulum.DateTime:
+        return self.current_date.start_of("day")
+
+    @property
+    def end_date(self) -> pendulum.DateTime:
+        return self.start_date.add(days=self.days_to_show)
 
     def get_events_cal(self) -> list[Activity]:
         c = GCal(self.credentials)

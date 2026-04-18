@@ -1,6 +1,6 @@
 import logging
 from itertools import chain
-from typing import Optional, cast
+from typing import cast
 
 import pendulum
 from pydantic import SecretStr
@@ -39,7 +39,7 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.Da
     # v4 API no longer supports is_completed param -- filter client-side
     tasks = [t for t in all_tasks if not t.is_completed]
 
-    def include_task(due: Optional[Due]) -> bool:
+    def include_task(due: Due | None) -> bool:
         if due is None:
             return False
         parsed = cast(pendulum.DateTime, pendulum.parse(due.date, tz=tz))

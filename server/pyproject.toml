@@ -7,7 +7,7 @@ name = "server"
 dynamic = ["version"]
 description = 'Collects data from APIs and renders it as an image for the Device to request & display.'
 readme = "README.md"
-requires-python = ">=3.9" # default on Raspberry Pi
+requires-python = ">=3.11"
 license = "MIT"
 keywords = []
 authors = [
@@ -16,12 +16,10 @@ authors = [
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
 dependencies = [
@@ -30,9 +28,8 @@ dependencies = [
   "pillow",
   "gcsa",
   "requests",
-  "toml",
   "fastapi",
-  "uvicorn[standard]",
+  "uvicorn",
   "typer",
   "todoist-api-python"
 ]
@@ -85,6 +82,3 @@ extend = "ruff_defaults.toml"
 
 [tool.ruff.lint]
 extend-select = ["PTH"]
-
-[tool.ruff.lint.pyupgrade]
-keep-runtime-typing = true # Needed for Pydantic and FastAPI, which rely on runtime types

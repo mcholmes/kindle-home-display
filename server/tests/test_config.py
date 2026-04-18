@@ -36,7 +36,7 @@ def valid_calendar_config():
 @pytest.fixture
 def valid_tasks_config():
     return {
-        "project_id": 2306241165
+        "project_id": "2306241165"
     }
 
 # from_dict tests

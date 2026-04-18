@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from typing import Optional, cast
 
 import pendulum
@@ -10,7 +11,7 @@ from server.activity import Activity
 
 logger = logging.getLogger(__name__)
 
-def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: pendulum.DateTime) -> list[Activity]:
+def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.DateTime) -> list[Activity]:
 
     """
     Returns all tasks within a given Project before the specified end date (i.e. includes overdue tasks).
@@ -23,17 +24,20 @@ def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: pendulum.Da
     logger.debug("Querying Todoist.")
     logger.debug("Getting collaborators...")
     try:
-        collaborators = api.get_collaborators(project_id=project_id)
+        collaborators = list(chain.from_iterable(api.get_collaborators(project_id=str(project_id))))
     except Exception:
         logger.exception("Failed to get collaborators.")
         raise
 
     logger.debug("Getting tasks...")
     try:
-        tasks = api.get_tasks(project_id=project_id, is_completed=False)
+        all_tasks = list(chain.from_iterable(api.get_tasks(project_id=str(project_id))))
     except Exception:
         logger.exception("Failed to get tasks.")
         raise
+
+    # v4 API no longer supports is_completed param -- filter client-side
+    tasks = [t for t in all_tasks if not t.is_completed]
 
     def include_task(due: Optional[Due]) -> bool:
         if due is None:
@@ -41,7 +45,7 @@ def get_tasks_todoist(api_key: SecretStr, project_id: int, date_end: pendulum.Da
         parsed = cast(pendulum.DateTime, pendulum.parse(due.date, tz=tz))
         return parsed <= date_end
 
-    tasks_due = filter(lambda x: include_task(x.due), tasks)
+    tasks_due = [t for t in tasks if include_task(t.due)]
 
     my_collaborators = {c.id: c.name for c in collaborators}
 

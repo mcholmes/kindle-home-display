@@ -19,9 +19,31 @@ It requires Python 3.11+ and is designed to run on a Raspberry Pi.
 
 ### Server Setup (Raspberry Pi)
 
-1. Download the latest .whl file and `pip install` it.
-2. Create configuration files (see [Configuration](#configuration) below)
-3. Run the application with `nohup server start > ~/uvicorn.log &1>2`
+1. Install system dependencies on the Pi (one-time):
+   ```
+   sudo apt install python3-pil python3-venv
+   ```
+2. Place `config.toml`, `api_keys.json`, and `credentials_service.json` in `~/server/` on the Pi (see [Configuration](#configuration) below)
+3. Create the venv on the Pi (one-time, picks up system Pillow):
+   ```
+   cd server && make setup-venv
+   ```
+4. Deploy from your dev machine (builds, pushes, installs into venv, and restarts):
+   ```
+   make deploy
+   ```
+
+Other useful targets (run from `server/`):
+```
+make build              # build .whl locally
+make push               # scp .whl to Pi
+make install            # pip install on Pi
+make start / make stop  # start/stop server on Pi
+make restart            # stop + start
+make status             # check if server is running
+make logs               # print server logs from Pi
+make ssh                # open shell on Pi in server dir
+```
 
 :warning: TODO: publish builds as downloadable releases.
 

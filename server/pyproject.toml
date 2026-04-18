@@ -28,6 +28,7 @@ dependencies = [
   "pillow",
   "gcsa",
   "requests",
+  "pyyaml",
   "fastapi",
   "uvicorn",
   "typer",

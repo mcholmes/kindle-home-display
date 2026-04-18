@@ -31,7 +31,7 @@ def setup(
     dashboard device using wget or similar.
 
     After pip installing the .whl, run this from the command line:
-    nohup server start > ~/uvicorn.log &1>2
+    nohup server start > ~/uvicorn.log 2>&1
 
     """
 

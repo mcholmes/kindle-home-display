@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "tzdata", # fallback in case OS doesn't have IANA timezone data
+  "pendulum>=3,<4",
   "pydantic",
   "pillow",
   "gcsa",

@@ -1,11 +1,10 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import datetime, timedelta
 from pathlib import Path
 
+import pendulum
 from fastapi import APIRouter, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
-from zoneinfo import ZoneInfo
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.cal import Calendar
@@ -52,10 +51,8 @@ class App:
 
         return Response(content=image, media_type="image/png")
 
-    def get_dashboard_data(self) -> tuple[dict[list[Activity]], datetime]:
-        # list timezones: print(zoneinfo.available_timezones())
-        display_timezone = ZoneInfo(self.config.calendar.display_timezone)
-        current_date = datetime.now(display_timezone)
+    def get_dashboard_data(self) -> tuple[dict[int, list[Activity]], pendulum.DateTime]:
+        current_date = pendulum.now(self.config.calendar.display_timezone)
 
         logger.debug("Getting data in parallel...")
 
@@ -84,7 +81,7 @@ class App:
 
         return events, current_date
 
-    def generate_image(self, events: dict[list[Activity]], current_date: datetime) -> bytes:
+    def generate_image(self, events: dict[int, list[Activity]], current_date: pendulum.DateTime) -> bytes:
         events_today = sort_by_time(events.get(0, []))
         events_tomorrow = sort_by_time(events.get(1, []))
 
@@ -108,14 +105,14 @@ class App:
 
         return r.get_png()
 
-    def get_tasks(self, current_date: datetime) -> list[Activity]:
+    def get_tasks(self, current_date: pendulum.DateTime) -> list[Activity]:
         config = self.config.tasks
 
         project_id = config.project_id
-        date_end = current_date + timedelta(days=self.config.calendar.days_to_show)
+        date_end = current_date.add(days=self.config.calendar.days_to_show)
         return get_tasks_todoist(api_key=self.config.api_keys["todoist"], project_id=project_id, date_end=date_end)
 
-    def get_appointments(self, current_date: datetime) -> list[Activity]:
+    def get_appointments(self, current_date: pendulum.DateTime) -> list[Activity]:
         config = self.config.calendar
 
         calendar_ids = config.ids.values()

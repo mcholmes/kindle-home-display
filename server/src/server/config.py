@@ -128,7 +128,7 @@ class CalendarConfig(BaseModel):
     )
 
 class TasksConfig(BaseModel):
-    project_id: int
+    project_id: str
 
 class WeatherConfig(BaseModel):
     latitude: float

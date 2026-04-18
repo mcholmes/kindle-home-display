@@ -1,8 +1,8 @@
-from datetime import date, datetime, time, timedelta
+from datetime import date, time
 
+import pendulum
 import pytest
 from pydantic import ValidationError
-from zoneinfo import ZoneInfo
 
 from server.activity import (
     Activity,
@@ -13,24 +13,24 @@ from server.activity import (
     sort_by_time,
 )
 
-TZ = ZoneInfo("Europe/London")
+TZ = "Europe/London"
 SUMMARY = "event summary here"
 
 @pytest.fixture
 def date_future() -> date:
-    return datetime(9999,1,1,tzinfo=TZ).date()
+    return pendulum.datetime(9999, 1, 1, tz=TZ).date()
 
 @pytest.fixture
-def datetime_future() -> datetime:
-    return datetime(9999,1,1,0,5,tzinfo=TZ)
+def datetime_future() -> pendulum.DateTime:
+    return pendulum.datetime(9999, 1, 1, 0, 5, tz=TZ)
 
 @pytest.fixture
 def date_past() -> date:
-    return datetime(1900,1,1,tzinfo=TZ).date()
+    return pendulum.datetime(1900, 1, 1, tz=TZ).date()
 
 @pytest.fixture
-def datetime_past() -> datetime:
-    return datetime(1900,1,1,0,5,tzinfo=TZ)
+def datetime_past() -> pendulum.DateTime:
+    return pendulum.datetime(1900, 1, 1, 0, 5, tz=TZ)
 
 # ========== Valid cases ==========
 
@@ -63,8 +63,8 @@ def test_time_start_short():
     e = Activity.from_datetimes(
         activity_type="event",
         summary=SUMMARY,
-        datetime_start=datetime(1970,1,1,12,30),
-        datetime_end=datetime(1970,1,1,13,30),
+        datetime_start=pendulum.datetime(1970, 1, 1, 12, 30),
+        datetime_end=pendulum.datetime(1970, 1, 1, 13, 30),
         )
 
     assert e.time_start_short == "12.30pm"
@@ -77,8 +77,8 @@ def test_get_relative_days_start(date_future):
         date_start=date_future
         )
 
-    d_minus_1 = date_future - timedelta(days=1)
-    d_plus_1 = date_future + timedelta(days=1)
+    d_minus_1 = date_future - pendulum.duration(days=1)
+    d_plus_1 = date_future + pendulum.duration(days=1)
 
     assert e.get_relative_days_start(d_minus_1) == 1
     assert e.get_relative_days_start(date_future) == 0
@@ -88,24 +88,24 @@ def test_group_events_by_relative_day():
     e1 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=date(2022,1,1)
+        date_start=date(2022, 1, 1)
         )
 
     e2 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=date(2022,1,2)
+        date_start=date(2022, 1, 2)
         )
 
     e3 = Activity(
         activity_type="event",
         summary=SUMMARY,
-        date_start=date(2022,1,1)
+        date_start=date(2022, 1, 1)
         )
 
     events = [e1, e2, e3]
 
-    grouped = group_events_by_relative_day(events, date(2022,1,1))
+    grouped = group_events_by_relative_day(events, date(2022, 1, 1))
 
     assert len(grouped) == 2
     assert len(grouped[0]) == 2
@@ -164,13 +164,13 @@ def test_is_not_all_day(date_future):
         activity_type="event",
         summary=SUMMARY,
         date_start=date_future,
-        time_start=time(12,30)
+        time_start=time(12, 30)
         )
 
     assert not e.is_all_day
 
 def test_is_multi_day(date_future):
-    day_plus_one = date_future + timedelta(days=1)
+    day_plus_one = date_future + pendulum.duration(days=1)
     e = Activity(
         activity_type="event",
         summary=SUMMARY,
@@ -181,7 +181,7 @@ def test_is_multi_day(date_future):
     assert e.is_multi_day
 
 def test_ends_today():
-    now = datetime.now(tz=TZ)
+    now = pendulum.now(TZ)
 
     e1 = Activity(
         activity_type="event",
@@ -190,7 +190,7 @@ def test_ends_today():
         time_start=None
     )
 
-    tomorrow = now + timedelta(days=1)
+    tomorrow = now.add(days=1)
     e2 = Activity(
         activity_type="event",
         summary=SUMMARY,
@@ -202,11 +202,11 @@ def test_ends_today():
     assert not e2.ends_today
 
 def test_ended_over_an_hour_ago():
-    now = datetime.now(tz=TZ)
-    now_minus_2_hours = now - timedelta(hours=2)
-    now_minus_30_minutes = now - timedelta(minutes=30)
-    now_plus_30_minutes = now + timedelta(minutes=30)
-    now_plus_2_hours = now + timedelta(hours=2)
+    now = pendulum.now(TZ)
+    now_minus_2_hours = now.subtract(hours=2)
+    now_minus_30_minutes = now.subtract(minutes=30)
+    now_plus_30_minutes = now.add(minutes=30)
+    now_plus_2_hours = now.add(hours=2)
 
     e1 = Activity(
         activity_type="event",
@@ -244,14 +244,14 @@ def test_ended_over_an_hour_ago():
 # ========== Functions ==========
 @pytest.mark.parametrize("any_datetime,expected",[
         (None, None),
-        (datetime(1970,1,1,  0,0), "12am"),
-        (datetime(1970,1,1,  0,30), "12.30am"),
-        (datetime(1970,1,1,  1,0), "1am"),
-        (datetime(1970,1,1,  1,30), "1.30am"),
-        (datetime(1970,1,1,  12,0), "12pm"),
-        (datetime(1970,1,1,  12,30), "12.30pm"),
-        (datetime(1970,1,1,  13,0), "1pm"),
-        (datetime(1970,1,1,  13,30), "1.30pm")
+        (pendulum.datetime(1970, 1, 1,  0, 0), "12am"),
+        (pendulum.datetime(1970, 1, 1,  0, 30), "12.30am"),
+        (pendulum.datetime(1970, 1, 1,  1, 0), "1am"),
+        (pendulum.datetime(1970, 1, 1,  1, 30), "1.30am"),
+        (pendulum.datetime(1970, 1, 1,  12, 0), "12pm"),
+        (pendulum.datetime(1970, 1, 1,  12, 30), "12.30pm"),
+        (pendulum.datetime(1970, 1, 1,  13, 0), "1pm"),
+        (pendulum.datetime(1970, 1, 1,  13, 30), "1.30pm")
     ])
 def test_calculate_short_time(any_datetime, expected):
     if any_datetime is None:
@@ -265,12 +265,12 @@ def test_calculate_short_time_invalid_type():
 
 @pytest.mark.parametrize("dt,expected", [
     (None, None),
-    (date(1970,1,1), None),
-    (datetime(9999,1,1), time(0,0)),
-    (datetime(9999,1,1,0,5), time(0,5))
+    (date(1970, 1, 1), None),
+    (pendulum.datetime(9999, 1, 1), time(0, 0)),
+    (pendulum.datetime(9999, 1, 1, 0, 5), time(0, 5))
     ])
 def test_datetime_to_time(dt, expected):
-    if dt is None or dt.year == 1970:
+    if dt is None or (isinstance(dt, date) and not isinstance(dt, pendulum.DateTime) and dt.year == 1970):
         assert datetime_to_time(dt) is None
     else:
         assert datetime_to_time(dt) == expected
@@ -287,11 +287,11 @@ def test_sort_by_time(date_past):
 
     activities = [
         (Activity(activity_type="event", summary="0", date_start=date_past, time_start=None)),
-        (Activity(activity_type="event", summary="1", date_start=date_past, time_start=time(23,59))),
-        (Activity(activity_type="event", summary="2", date_start=date_past, time_start=time(13,00))),
-        (Activity(activity_type="event", summary="3", date_start=date_past, time_start=time(12,00))),
-        (Activity(activity_type="event", summary="4", date_start=date_past, time_start=time(0,30))),
-        (Activity(activity_type="event", summary="5", date_start=date_past, time_start=time(0,0))),
+        (Activity(activity_type="event", summary="1", date_start=date_past, time_start=time(23, 59))),
+        (Activity(activity_type="event", summary="2", date_start=date_past, time_start=time(13, 00))),
+        (Activity(activity_type="event", summary="3", date_start=date_past, time_start=time(12, 00))),
+        (Activity(activity_type="event", summary="4", date_start=date_past, time_start=time(0, 30))),
+        (Activity(activity_type="event", summary="5", date_start=date_past, time_start=time(0, 0))),
     ]
 
     activities_sorted = sort_by_time(activities)
@@ -302,4 +302,3 @@ def test_sort_by_time(date_past):
     assert activities_sorted[3].summary == "3"
     assert activities_sorted[4].summary == "2"
     assert activities_sorted[5].summary == "1"
-

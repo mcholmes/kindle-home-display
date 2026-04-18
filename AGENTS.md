@@ -20,6 +20,19 @@ hatch run server start      # run FastAPI dev server (127.0.0.1:8000)
 hatch run server once       # render a single dashboard image to disk
 ```
 
+Deployment to Raspberry Pi via Makefile:
+
+```
+make deploy                 # build + push + install + restart (full deploy)
+make build                  # build .whl locally
+make push                   # scp .whl to Pi
+make install                # pip install on Pi
+make start / make stop      # start/stop server on Pi via SSH
+make status                 # check if server is running
+make logs                   # print server logs from Pi
+make ssh                    # open shell on Pi in server dir
+```
+
 There is no Python CI -- tests, types, and linting are local-only. CI only runs shell linting.
 
 ## Device commands (run from `device/`)
@@ -37,6 +50,7 @@ Rust binary (`next-wakeup`) cross-compiles to `armv7-unknown-linux-musleabi` usi
 ## Key constraints
 
 - **Python 3.11 minimum** -- targets Raspberry Pi. Use modern syntax: `X | Y` union types (not `Optional`/`Union`), `match/case`, `tomllib` (not the `toml` package), `Self` return types on classmethods.
+- **Pillow is installed via apt on the Pi** (`sudo apt install python3-pil`), not pip, to avoid compiling C extensions on ARM. The pip install must have access to system site-packages.
 - **Use pendulum for all datetime logic** -- the server uses `pendulum` (not stdlib `datetime`) for timezone handling, date arithmetic, and formatting. Use `pendulum.now()`, `pendulum.datetime()`, `.add()`, `.subtract()`, `.start_of()`, `.format()` etc. The `Activity` model stores stdlib `date` and `time` fields for Pydantic, but all construction and manipulation should go through pendulum. External libraries (e.g. `gcsa`) may still return stdlib `datetime` objects -- the `datetime_to_date`/`datetime_to_time` helpers in `activity.py` handle both types.
 - **Shell scripts target BusyBox ash**, not bash. ShellCheck config: `shell=busybox`. Do not use bash-only syntax.
 - **Ruff config is extensive** -- `ruff_defaults.toml` (534 lines) is extended by `pyproject.toml` which adds `PTH` rules (prefer `pathlib` over `os.path`). Relative imports are banned.

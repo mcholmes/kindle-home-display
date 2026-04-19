@@ -1,14 +1,11 @@
-import logging
 from pathlib import Path
 
 import pendulum
+from loguru import logger
 from pydantic import PositiveInt
 
 from server.activity import Activity
 from server.calendar_plugins.gcal import GCal
-
-logger = logging.getLogger(__name__)
-
 
 class Calendar:
     """

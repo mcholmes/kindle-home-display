@@ -1,10 +1,7 @@
-import logging
 from pathlib import Path
 
 from PIL import ImageDraw, ImageFont
-
-logger = logging.getLogger(__name__)
-
+from loguru import logger
 
 class Font:
     """

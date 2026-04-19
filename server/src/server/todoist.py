@@ -1,15 +1,13 @@
-import logging
 from datetime import date, datetime
 from itertools import chain
 
 import pendulum
+from loguru import logger
 from pydantic import SecretStr
 from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Due
 
 from server.activity import Activity
-
-logger = logging.getLogger(__name__)
 
 def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.DateTime) -> list[Activity]:
 

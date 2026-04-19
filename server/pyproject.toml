@@ -32,7 +32,8 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "typer",
-  "todoist-api-python"
+  "todoist-api-python",
+  "loguru"
 ]
 
 [project.urls]

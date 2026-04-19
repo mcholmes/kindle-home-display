@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated
 
+from loguru import logger
 from typer import Context, Option, Typer
 
 from server.app import App, create_app
@@ -67,32 +68,54 @@ def start(ctx: Context):
 
     uvicorn.run(f, host=str(config.server.host), port=config.server.port)
 
+class InterceptHandler(logging.Handler):
+    """Intercept standard logging messages toward Loguru."""
+    def emit(self, record: logging.LogRecord) -> None:
+        # Get corresponding Loguru level if it exists.
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = str(record.levelno)
+
+        # Find caller from where originated the logged message.
+        frame, depth = logging.currentframe(), 2
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+
 def configure_logging(filepath: Path, log_level: str, log_to_console: bool = False):  # noqa: FBT002, FBT001
-        """Reconfigure the ROOT logger, not the module's logger"""
-        if filepath.is_dir():
-             raise IsADirectoryError
+    """Configure Loguru and intercept standard logging."""
+    import sys
 
-        root_logger = logging.getLogger()
-        root_logger.setLevel(log_level)
+    if filepath.is_dir():
+        raise IsADirectoryError
 
-        h_format = logging.Formatter(
-            fmt="%(asctime)s %(levelname)s %(name)s :: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
+    log_dir = filepath.parent
+    if not log_dir.exists():
+        print(f"Creating new log directory: {log_dir}")  # noqa: T201
+        log_dir.mkdir(parents=True, exist_ok=True)
 
-        if log_to_console:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(h_format)
-            root_logger.addHandler(console_handler)
+    # Remove default handler
+    logger.remove()
 
-        log_dir = filepath.parent
-        if not Path.exists(log_dir):
-            print(f"Creating new log directory: {log_dir}")  # noqa: T201
-            Path.mkdir(log_dir)
+    # Add console handler
+    if log_to_console:
+        logger.add(sys.stderr, level=log_level)
 
-        file_handler = logging.FileHandler(filepath)
-        file_handler.setFormatter(h_format)
-        root_logger.addHandler(file_handler)
+    # Add file handler with rotation
+    logger.add(filepath, rotation="10 MB", retention="10 days", level=log_level)
+
+    # Intercept standard logging
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    # Intercept uvicorn logging
+    for _log in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
+        _logger = logging.getLogger(_log)
+        _logger.handlers = [InterceptHandler()]
+        _logger.propagate = False
 
 if __name__ == "__main__":
     cli()

@@ -59,7 +59,7 @@ def get_required_fields(model: type[BaseModel], recursive: bool = False) -> Iter
         else:
             yield name
 
-def check_config_contains_required_fields(cls: BaseModel, config_dict: dict) -> None:
+def check_config_contains_required_fields(cls: type[BaseModel], config_dict: dict) -> None:
     """
     Checks that the top-level keys in config_dict match the non-optional fields of this class.
     Note that it doesn't check the lower-level fields within each; we leave that to Pydantic.
@@ -97,7 +97,7 @@ def get_dict_from_file(file_path: Path) -> dict:
 
 class ServerConfig(BaseModel):
     host: IPv4Address = Field(
-        default="127.0.0.1",
+        default=IPv4Address("127.0.0.1"),
         description="Host to bind socket to. Any valid IP address",
     )
     port: int = Field(

@@ -3,6 +3,7 @@
 
 from datetime import date, time
 from pathlib import Path
+from typing import Any
 
 import pendulum
 import pytest
@@ -23,12 +24,12 @@ FONT_MAP = {
 }
 
 
-def _make_config(**overrides) -> RenderConfig:
+def _make_config(**overrides: Any) -> RenderConfig:
     """Create a RenderConfig with sensible test defaults."""
-    defaults = {
+    defaults: dict[str, Any] = {
         "image_width": 800,
         "image_height": 600,
-        "fonts_file_dir": FONT_DIR_STR,
+        "fonts_file_dir": FONT_DIR,
         "font_style_map": FONT_MAP,
         "margin_x": 50,
         "margin_y": 50,

@@ -36,7 +36,7 @@ class Calendar:
         return self.start_date.add(days=self.days_to_show)
 
     def get_events_cal(self) -> list[Activity]:
-        c = GCal(self.credentials)
+        c = GCal(Path(self.credentials))
         return c.get_events(
             date_from=self.start_date,
             date_to=self.end_date,

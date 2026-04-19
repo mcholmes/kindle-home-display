@@ -10,7 +10,6 @@ if [ -z "$test_ip" ]; then
     exit 1
 fi
 
-
 wait_for_wifi() {
     max_retry=30
     counter=0

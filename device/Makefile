@@ -48,8 +48,13 @@ tmp/xh:
 dist/local/state:
 	mkdir -p dist/local/state
 
-clean:
-	rm -r dist/*
+test:
+	@echo "Running shell tests..."
+	@for test in tests/test_*.sh; do \
+		sh "$$test" || exit 1; \
+	done
+	@echo "Running rust tests..."
+	@cd src/next-wakeup && cargo test --target $(shell rustc -vV | awk '/host:/ {print $$2}')
 
 watch:
 	watchexec -w src/ -p -- make
@@ -89,4 +94,4 @@ print-logs:
 copy-logs:
 	scp $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log .
 
-.PHONY: clean watch tarball format ssh start stop rsync push print-logs copy-logs status deploy
+.PHONY: clean watch tarball format ssh start stop rsync push print-logs copy-logs status deploy test

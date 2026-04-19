@@ -1,19 +1,16 @@
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pendulum
 from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
+from loguru import logger
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.cal import Calendar
 from server.config import AppConfig
 from server.render import RenderConfig, Renderer
 from server.todoist import get_tasks_todoist
-
-logger = logging.getLogger(__name__)
-
 
 class App:
     """Core application logic: fetches data, renders dashboard images."""

@@ -59,7 +59,7 @@ deploy: build push install restart
 # ---------- Remote management ----------
 
 start:
-	@ssh -f $(REMOTE_HOST) "cd $(REMOTE_DIR) && nohup $(REMOTE_BIN) start >> nohup.out 2>&1 &"
+	@ssh $(REMOTE_HOST) "cd $(REMOTE_DIR) && nohup $(REMOTE_BIN) start >> nohup.out 2>&1 < /dev/null &"
 	@echo "Started."
 
 stop:

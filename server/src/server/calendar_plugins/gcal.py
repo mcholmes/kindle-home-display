@@ -4,10 +4,10 @@ from pathlib import Path
 import pendulum
 from gcsa.google_calendar import GoogleCalendar
 from google.oauth2 import service_account
+from loguru import logger
 
 from server.activity import Activity
 
-logger = logging.getLogger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]

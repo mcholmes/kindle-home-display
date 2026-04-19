@@ -1,15 +1,13 @@
 import io
-import logging
 from pathlib import Path
 
 import pendulum
 from PIL import Image, ImageDraw
+from loguru import logger
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveFloat, PositiveInt
 
 from server.activity import Activity
 from server.font import Font, FontFactory
-
-logger = logging.getLogger(__name__)
 
 _script_dir = Path(__file__).resolve().parent
 

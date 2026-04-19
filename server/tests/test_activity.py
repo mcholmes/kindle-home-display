@@ -242,7 +242,7 @@ def test_ended_over_an_hour_ago():
     assert not e4.ended_over_an_hour_ago
 
 # ========== Functions ==========
-@pytest.mark.parametrize("any_datetime,expected",[
+@pytest.mark.parametrize(("any_datetime", "expected"),[
         (None, None),
         (pendulum.datetime(1970, 1, 1,  0, 0), "12am"),
         (pendulum.datetime(1970, 1, 1,  0, 30), "12.30am"),
@@ -263,7 +263,7 @@ def test_calculate_short_time_invalid_type():
     with pytest.raises(TypeError):
         calculate_short_time("abc")
 
-@pytest.mark.parametrize("dt,expected", [
+@pytest.mark.parametrize(("dt", "expected"), [
     (None, None),
     (date(1970, 1, 1), None),
     (pendulum.datetime(9999, 1, 1), time(0, 0)),

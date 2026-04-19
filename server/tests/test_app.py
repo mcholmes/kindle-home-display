@@ -10,7 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from server.activity import Activity
-from server.app import App, AppServer
+from server.app import App, create_app
 from server.config import AppConfig, CalendarConfig, ImageConfig, ServerConfig, TasksConfig
 
 TZ = "Europe/London"
@@ -265,14 +265,13 @@ class TestGetAppointments:
         mock_calendar_cls.assert_called_once()
 
 
-# ========== AppServer ==========
+# ========== create_app ==========
 
 
-class TestAppServer:
+class TestCreateApp:
     def test_has_expected_routes(self, minimal_config):
-        with patch.object(AppServer, "get_dashboard_response"):
-            server = AppServer(minimal_config)
-            route_paths = [r.path for r in server.router.routes]
+        fastapi_app = create_app(minimal_config)
+        route_paths = [r.path for r in fastapi_app.routes]
 
         assert "/" in route_paths
         assert "/dashboard" in route_paths
@@ -280,9 +279,11 @@ class TestAppServer:
         assert "/logs/device" in route_paths
 
     def test_root_returns_docs_message(self, minimal_config):
-        with patch.object(AppServer, "get_dashboard_response"):
-            server = AppServer(minimal_config)
-            result = server.root()
+        from fastapi.testclient import TestClient
 
-        assert "docs" in result.lower()
-        assert "8000" in result
+        fastapi_app = create_app(minimal_config)
+        client = TestClient(fastapi_app)
+        response = client.get("/")
+
+        assert response.status_code == 200
+        assert "docs" in response.text.lower()

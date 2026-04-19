@@ -90,7 +90,7 @@ class App:
             image_height=self.config.image.height,
             rotate_angle=self.config.image.rotate_angle,
             margin_x=self.config.image.margin_x,
-            margin_y=self.config.image.margin_x,
+            margin_y=self.config.image.margin_y,
             top_row_y=250,
             space_between_sections=100,
         )

@@ -159,7 +159,7 @@ class AppConfig(BaseModel): # TODO: make this available to Typer in cli.py as a 
             NotADirectoryError: If the supplied path is not a directory.
 
         """
-        if not directory.is_dir:
+        if not directory.is_dir():
             err = "Path supplied isn't a directory."
             raise NotADirectoryError(err)
 

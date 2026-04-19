@@ -6,7 +6,7 @@ import pendulum
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
 
 from server.activity import Activity
 
@@ -44,7 +44,7 @@ class Font:
 
         return self._font.getbbox(text)[3]
 
-    def size(self, text: str) -> int:
+    def size(self, text: str) -> tuple[int, int]:
         return self.width(text), self.height(text)
 
     def write(
@@ -65,7 +65,7 @@ class FontFactory:
         self,
         draw: ImageDraw,
         font_dir: Path | None = None,
-        font_map: dict[str] | None = None,
+        font_map: dict[str, str] | None = None,
     ):
         self.default_size = 48
 
@@ -108,8 +108,7 @@ class FontFactory:
 
 
 class Renderer(BaseModel):
-    class ConfigDict:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
     # Mandatory fields
     image_height: PositiveInt = Field(description="Image height in pixels")
@@ -137,7 +136,7 @@ class Renderer(BaseModel):
         default=1.1,
         description="Multiple of height to space apart bullet points.")
 
-    bullet_formats: str = Field(
+    bullet_formats: dict[str, str] = Field(
         default={"event": "•", "task": ">"},
         description="Bullet point markers. Can be an empty string."
     )
@@ -183,7 +182,7 @@ class Renderer(BaseModel):
         return text[: left - 1] + "..."
 
     def render_single_activity(
-        self, position: tuple[int], activity_text: str, bullet: str, font: Font, prefix: str | None = None
+        self, position: tuple[int, int], activity_text: str, bullet: str, font: Font, prefix: str | None = None
     ):
         """
         Writes a bullet-point, some grey text (prefix), then some black text (activity_text).

@@ -266,3 +266,11 @@ def test_from_dir_no_config_file(tmp_path):
     """from_dir should raise FileNotFoundError if no config file exists."""
     with pytest.raises(FileNotFoundError):
         AppConfig.from_dir(tmp_path)
+
+def test_from_dir_with_file_path_raises(tmp_path):
+    """from_dir should raise NotADirectoryError if given a file instead of a directory."""
+    f = tmp_path / "config.toml"
+    f.write_text("[server]\n")
+
+    with pytest.raises(NotADirectoryError):
+        AppConfig.from_dir(f)

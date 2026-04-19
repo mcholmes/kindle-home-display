@@ -1,4 +1,5 @@
 import io
+import textwrap
 from pathlib import Path
 
 import pendulum
@@ -247,6 +248,34 @@ class Renderer:
         self.render_activities("Tomorrow", events_tomorrow, y1)
 
         self.render_last_updated(time)
+
+        self._image = self._image.rotate(c.rotate_angle, expand=True)
+
+    def render_error(self, error_text: str) -> None:
+        """Renders an error screen containing the traceback."""
+        c = self._config
+        font = self._ff.get("regular", 16)
+
+        approx_char_width = font.width("a") or 8
+        max_chars = max(40, (c.image_width - 2 * c.margin_x) // approx_char_width)
+
+        lines = []
+        for line in error_text.split('\n'):
+            wrapped = textwrap.wrap(line, width=max_chars, replace_whitespace=False)
+            if wrapped:
+                lines.extend(wrapped)
+            else:
+                lines.append('')
+
+        y = c.margin_y + c.top_row_y
+        line_height = font.height()
+
+        for line in lines:
+            if y + line_height > c.image_height - c.margin_y:
+                font.write((c.margin_x, y), "... (truncated)")
+                break
+            font.write((c.margin_x, y), line)
+            y += int(line_height * 1.5)
 
         self._image = self._image.rotate(c.rotate_angle, expand=True)
 

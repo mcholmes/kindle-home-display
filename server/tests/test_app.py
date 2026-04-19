@@ -10,7 +10,7 @@ import pytest
 from pydantic import SecretStr
 
 from server.activity import Activity
-from server.app import App, create_app
+from server.app import App, DataFetchError, create_app
 from server.config import AppConfig, CalendarConfig, ImageConfig, ServerConfig, TasksConfig
 
 TZ = "Europe/London"
@@ -171,6 +171,41 @@ class TestGetDashboardData:
         assert events == {}
         assert current_date == now
 
+    @patch.object(App, "get_appointments")
+    @patch.object(App, "get_tasks")
+    def test_partial_failure_returns_working_data(self, mock_tasks, mock_appointments, app):
+        now = pendulum.datetime(2025, 4, 19, 10, 0, tz=TZ)
+
+        mock_tasks.side_effect = Exception("Todoist failed")
+        mock_appointments.return_value = [_make_event("Standup")]
+
+        with patch("server.app.pendulum") as mock_pendulum:
+            mock_pendulum.now.return_value = now
+            events, current_date = app.get_dashboard_data()
+
+        assert current_date == now
+        assert 0 in events
+        assert len(events[0]) == 1
+        assert events[0][0].summary == "Standup"
+
+    @patch.object(App, "get_appointments")
+    @patch.object(App, "get_tasks")
+    def test_total_failure_raises_data_fetch_error(self, mock_tasks, mock_appointments, app):
+        now = pendulum.datetime(2025, 4, 19, 10, 0, tz=TZ)
+
+        mock_tasks.side_effect = Exception("Todoist failed")
+        mock_appointments.side_effect = Exception("Calendar failed")
+
+        with patch("server.app.pendulum") as mock_pendulum:
+            mock_pendulum.now.return_value = now
+            with pytest.raises(DataFetchError) as exc_info:
+                app.get_dashboard_data()
+
+        assert "Tasks error" in str(exc_info.value)
+        assert "Appointments error" in str(exc_info.value)
+        assert "Todoist failed" in str(exc_info.value)
+        assert "Calendar failed" in str(exc_info.value)
+
 
 # ========== App.generate_image ==========
 
@@ -213,6 +248,18 @@ class TestGenerateImageAndSave:
         content = output_file.read_bytes()
         assert content[:4] == b"\x89PNG"
 
+    @patch.object(App, "get_dashboard_data")
+    def test_generate_image_and_save_handles_error(self, mock_data, app, tmp_path):
+        mock_data.side_effect = DataFetchError("Test error trace")
+
+        app.generate_image_and_save()
+
+        output_file = tmp_path / "dashboard.png"
+        assert output_file.exists()
+        assert output_file.stat().st_size > 0
+        content = output_file.read_bytes()
+        assert content[:4] == b"\x89PNG"
+
 
 # ========== App.get_dashboard_response ==========
 
@@ -222,6 +269,15 @@ class TestGetDashboardResponse:
     def test_returns_png_response(self, mock_data, app):
         now = pendulum.datetime(2025, 4, 19, 10, 0, tz=TZ)
         mock_data.return_value = ({0: [_make_event("Test")]}, now)
+
+        response = app.get_dashboard_response()
+
+        assert response.media_type == "image/png"
+        assert response.body[:4] == b"\x89PNG"
+
+    @patch.object(App, "get_dashboard_data")
+    def test_get_dashboard_response_handles_error(self, mock_data, app):
+        mock_data.side_effect = DataFetchError("Test error trace")
 
         response = app.get_dashboard_response()
 

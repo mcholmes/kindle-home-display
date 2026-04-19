@@ -4,13 +4,13 @@ log() {
 
     if [ $# -ne 2 ]; then
         echo "Incorrect number of arguments; expected 2 but got $#. Usage: log [LEVEL] [MESSAGE]"
-    
+
         if [ $# -gt 0 ]; then
             echo "Arguments given: $*"
         fi
         exit 1
     fi
-    
+
     level=$1
     message=$2
     timestamp="$(date +'%Y-%m-%d %H:%M:%S')"
@@ -25,7 +25,7 @@ check_args() {
         if [ $# -gt 1 ]; then
             echo "Arguments given: $*"
         fi
-    exit 1
+        exit 1
     fi
 }
 

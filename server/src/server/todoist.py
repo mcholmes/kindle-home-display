@@ -53,6 +53,8 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.Da
 
     logger.debug("Constructing activity list from tasks...")
     for task in tasks_due:
+        if task.due is None:
+            continue
         assignee_str = "" if task.assignee_id is None else f" [{my_collaborators.get(task.assignee_id)}]"
         summary = task.content + assignee_str
         desc = task.description

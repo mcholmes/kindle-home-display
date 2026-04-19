@@ -30,7 +30,7 @@ class RenderConfig(BaseModel):
     image_width: PositiveInt = Field(description="Image width in pixels")
 
     background_colour: str = Field(default="white")
-    fonts_file_dir: str = Field(
+    fonts_file_dir: Path = Field(
         default=_script_dir / "font",
         description="Path to directory containing .ttf fonts",
     )
@@ -194,7 +194,7 @@ class Renderer:
                     font=event_regular,
                 )
 
-            y += (line_height * c.activity_line_spacing) + 5  # Add spacing between bullet points
+            y = int(y + (line_height * c.activity_line_spacing) + 5)  # Add spacing between bullet points
 
         return y + c.space_between_sections
 

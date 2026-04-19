@@ -39,16 +39,20 @@ class Activity(BaseModel):
     @classmethod
     def from_datetimes(
         cls,
-        activity_type: str,
+        activity_type: Literal['event', 'task'],
         summary: str,
         datetime_start: pendulum.DateTime | date,
         datetime_end: pendulum.DateTime | date | None = None,
         description: str | None = None,
         location: str | None = None,
     ):
+        date_start = datetime_to_date(datetime_start)
+        if date_start is None:
+            raise ValueError("datetime_start must yield a valid date")
+
         return cls(
             activity_type=activity_type,
-            date_start=datetime_to_date(datetime_start),
+            date_start=date_start,
             date_end=datetime_to_date(datetime_end),
             time_start=datetime_to_time(datetime_start),
             time_end=datetime_to_time(datetime_end),
@@ -68,7 +72,7 @@ class Activity(BaseModel):
 
         return self.ends_today and not self.is_all_day and (
             (self.time_end is not None and self.time_end <= hour_ago) or
-            (self.time_end is None and self.time_start <= hour_ago)
+            (self.time_end is None and self.time_start is not None and self.time_start <= hour_ago)
         )
 
     @property
@@ -86,16 +90,19 @@ class Activity(BaseModel):
         return self.time_start is None
 
     @property
-    def time_start_short(self) -> str:
+    def time_start_short(self) -> str | None:
         return calculate_short_time(self.time_start)
 
     @property
-    def time_end_short(self) -> str:
+    def time_end_short(self) -> str | None:
         return calculate_short_time(self.time_end)
 
-    def get_relative_days_start(self, date_to_compare: pendulum.DateTime | date):
+    def get_relative_days_start(self, date_to_compare: pendulum.DateTime | date) -> int:
         # Multi-day events which start before the comparison date will return a negative value
-        delta = self.date_start - datetime_to_date(date_to_compare)
+        date_cmp = datetime_to_date(date_to_compare)
+        if date_cmp is None:
+            raise ValueError("date_to_compare must yield a valid date")
+        delta = self.date_start - date_cmp
         return delta.days
 
 
@@ -146,7 +153,7 @@ def datetime_to_date(dt: pendulum.DateTime | date | None) -> date | None:
     err = "Input is not a datetime or date: {dt}"
     raise TypeError(err)
 
-def calculate_short_time(dt_object: pendulum.DateTime | time) -> str | None:
+def calculate_short_time(dt_object: pendulum.DateTime | time | None) -> str | None:
     if dt_object is None:
         return None
 

@@ -65,6 +65,8 @@ class App:
         return Response(content=image, media_type="image/png")
 
     def get_dashboard_data(self) -> tuple[dict[int, list[Activity]], pendulum.DateTime]:
+        if self.config.calendar is None:
+            raise ValueError("Calendar configuration is missing")
         current_date = pendulum.now(self.config.calendar.display_timezone)
 
         logger.debug("Getting data in parallel...")
@@ -143,6 +145,12 @@ class App:
 
     def get_tasks(self, current_date: pendulum.DateTime) -> list[Activity]:
         config = self.config.tasks
+        if config is None:
+            raise ValueError("Tasks configuration is missing")
+        if self.config.calendar is None:
+            raise ValueError("Calendar configuration is missing")
+        if self.config.api_keys is None or "todoist" not in self.config.api_keys:
+            raise ValueError("Todoist API key is missing")
 
         project_id = config.project_id
         date_end = current_date.add(days=self.config.calendar.days_to_show)
@@ -150,6 +158,8 @@ class App:
 
     def get_appointments(self, current_date: pendulum.DateTime) -> list[Activity]:
         config = self.config.calendar
+        if config is None:
+            raise ValueError("Calendar configuration is missing")
 
         calendar_ids = list(config.ids.values())
         credentials = config.creds

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 from datetime import date, time
+from ipaddress import IPv4Address
 from pathlib import Path
 from unittest.mock import patch
 
@@ -20,7 +21,7 @@ TZ = "Europe/London"
 def minimal_config(tmp_path) -> AppConfig:
     """Config with all required fields, using tmp_path for server_dir."""
     return AppConfig(
-        server=ServerConfig(host="127.0.0.1", port=8000, server_dir=str(tmp_path)),
+        server=ServerConfig(host=IPv4Address("127.0.0.1"), port=8000, server_dir=str(tmp_path)),
         image=ImageConfig(width=800, height=600),
         calendar=CalendarConfig(
             display_timezone=TZ,

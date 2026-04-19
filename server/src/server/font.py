@@ -10,23 +10,23 @@ class Font:
     - Allows fonts to draw themselves, rather than passing around ImageFonts.
     """
 
-    def __init__(self, draw: ImageDraw, file: Path, size: int):
+    def __init__(self, draw: ImageDraw.ImageDraw, file: Path, size: int):
         self._draw = draw
 
         f = ImageFont.truetype(str(file), size)
         self._font = f
-        self._height = f.getbbox("lq")[
+        self._height = int(f.getbbox("lq")[
             3
-        ]  # max height for a line of this size, not its actual height
+        ])  # max height for a line of this size, not its actual height
 
     def width(self, text: str) -> int:
-        return self._font.getbbox(text)[2]
+        return int(self._font.getbbox(text)[2])
 
     def height(self, text: str | None = None) -> int:
         if text is None:
             return self._height
 
-        return self._font.getbbox(text)[3]
+        return int(self._font.getbbox(text)[3])
 
     def size(self, text: str) -> tuple[int, int]:
         return self.width(text), self.height(text)
@@ -40,14 +40,14 @@ class Font:
     ) -> None:
         self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
 
-    def image_font(self) -> ImageFont:
+    def image_font(self) -> ImageFont.FreeTypeFont:
         return self._font
 
 
 class FontFactory:
     def __init__(
         self,
-        draw: ImageDraw,
+        draw: ImageDraw.ImageDraw,
         font_dir: Path | None = None,
         font_map: dict[str, str] | None = None,
     ):

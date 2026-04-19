@@ -60,7 +60,7 @@ watch:
 	watchexec -w src/ -p -- make
 
 format:
-	shfmt -i 4 -w -l src/**/*.sh
+	shfmt -i 4 -w -l src/**/*.sh tests/*.sh
 
 # For ease of interacting with device 
 ssh:

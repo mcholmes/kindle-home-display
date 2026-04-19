@@ -1,4 +1,4 @@
-source ./src/logging.sh
+. ./src/logging.sh
 
 REFRESH_SCHEDULE=${REFRESH_SCHEDULE:-"2,32 8-17 * * MON-FRI"}
 

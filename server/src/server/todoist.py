@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from itertools import chain
 
 import pendulum
@@ -8,6 +8,7 @@ from todoist_api_python.api import TodoistAPI
 from todoist_api_python.models import Due
 
 from server.activity import Activity
+
 
 def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.DateTime) -> list[Activity]:
 

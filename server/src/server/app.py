@@ -16,7 +16,6 @@ from server.todoist import get_tasks_todoist
 
 class DataFetchError(Exception):
     """Raised when all data sources fail to fetch data."""
-    pass
 
 class App:
     """Core application logic: fetches data, renders dashboard images."""
@@ -171,7 +170,7 @@ def create_app(config: AppConfig) -> FastAPI:
 
     @fastapi_app.get("/", response_class=HTMLResponse)
     def root():
-        return f"For docs on how to use this API, go to /docs."
+        return "For docs on how to use this API, go to /docs."
 
     @fastapi_app.get("/dashboard")
     def dashboard():

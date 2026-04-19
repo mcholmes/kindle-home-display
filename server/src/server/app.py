@@ -1,3 +1,4 @@
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from server.cal import Calendar
 from server.config import AppConfig
 from server.render import RenderConfig, Renderer
 from server.todoist import get_tasks_todoist
+
+
+class DataFetchError(Exception):
+    """Raised when all data sources fail to fetch data."""
+    pass
 
 class App:
     """Core application logic: fetches data, renders dashboard images."""
@@ -38,16 +44,23 @@ class App:
         return self.get_logs(self.config.server.device_log_file_name)
 
     def generate_image_and_save(self) -> None:
-        events, current_date = self.get_dashboard_data()
-        image = self.generate_image(events, current_date)
+        try:
+            events, current_date = self.get_dashboard_data()
+            image = self.generate_image(events, current_date)
+        except DataFetchError as e:
+            image = self.generate_error_image(str(e))
+
         output_filepath = Path(self.config.server.server_dir) / self.config.server.image_name
 
         with Path.open(output_filepath, "wb") as f:
             f.write(image)
 
     def get_dashboard_response(self) -> Response:
-        events, current_date = self.get_dashboard_data()
-        image = self.generate_image(events, current_date)
+        try:
+            events, current_date = self.get_dashboard_data()
+            image = self.generate_image(events, current_date)
+        except DataFetchError as e:
+            image = self.generate_error_image(str(e))
 
         return Response(content=image, media_type="image/png")
 
@@ -62,8 +75,24 @@ class App:
             )  # TODO: make this optional depending on config.toml
             future_appointments = executor.submit(self.get_appointments, current_date)
 
-            tasks = future_tasks.result()
-            appointments = future_appointments.result()
+            errors = []
+
+            try:
+                tasks = future_tasks.result()
+            except Exception:
+                logger.exception("Failed to get tasks")
+                tasks = []
+                errors.append(f"Tasks error:\n{traceback.format_exc()}")
+
+            try:
+                appointments = future_appointments.result()
+            except Exception:
+                logger.exception("Failed to get appointments")
+                appointments = []
+                errors.append(f"Appointments error:\n{traceback.format_exc()}")
+
+        if len(errors) == 2:
+            raise DataFetchError("\n\n".join(errors))
 
         events_unsorted = tasks + appointments
         events_filtered = [event for event in events_unsorted if not event.ended_over_an_hour_ago]
@@ -78,10 +107,7 @@ class App:
 
         return events, current_date
 
-    def generate_image(self, events: dict[int, list[Activity]], current_date: pendulum.DateTime) -> bytes:
-        events_today = sort_by_time(events.get(0, []))
-        events_tomorrow = sort_by_time(events.get(1, []))
-
+    def _create_renderer(self) -> Renderer:
         cfg = self.config.image
         render_config = RenderConfig(
             image_width=cfg.width,
@@ -92,7 +118,13 @@ class App:
             top_row_y=cfg.top_row_y,
             space_between_sections=cfg.space_between_sections,
         )
-        r = Renderer(render_config)
+        return Renderer(render_config)
+
+    def generate_image(self, events: dict[int, list[Activity]], current_date: pendulum.DateTime) -> bytes:
+        events_today = sort_by_time(events.get(0, []))
+        events_tomorrow = sort_by_time(events.get(1, []))
+
+        r = self._create_renderer()
 
         r.render_all(
             todays_date=current_date,
@@ -102,6 +134,11 @@ class App:
 
         logger.info("Rendered successfully")
 
+        return r.get_png()
+
+    def generate_error_image(self, error_text: str) -> bytes:
+        r = self._create_renderer()
+        r.render_error(error_text)
         return r.get_png()
 
     def get_tasks(self, current_date: pendulum.DateTime) -> list[Activity]:

@@ -1,6 +1,6 @@
 import logging
+from datetime import date, datetime
 from itertools import chain
-from typing import cast
 
 import pendulum
 from pydantic import SecretStr
@@ -42,8 +42,10 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.Da
     def include_task(due: Due | None) -> bool:
         if due is None:
             return False
-        parsed = cast(pendulum.DateTime, pendulum.parse(due.date, tz=tz))
-        return parsed <= date_end
+        # v4 API: due.date is datetime.date (date-only) or datetime.datetime (with time)
+        if isinstance(due.date, datetime):
+            return pendulum.instance(due.date, tz=tz) <= date_end
+        return pendulum.instance(datetime.combine(due.date, datetime.min.time()), tz=tz) <= date_end
 
     tasks_due = [t for t in tasks if include_task(t.due)]
 
@@ -57,17 +59,19 @@ def get_tasks_todoist(api_key: SecretStr, project_id: str, date_end: pendulum.Da
         summary = task.content + assignee_str
         desc = task.description
 
-        date_start = cast(pendulum.DateTime, pendulum.parse(task.due.date))
-        time_start = (
-            cast(pendulum.DateTime, pendulum.parse(task.due.datetime)).time()
-            if task.due.datetime is not None
-            else None
-        )
+        # v4 API: due.date is datetime.datetime (with time) or datetime.date (date-only)
+        due_value = task.due.date
+        if isinstance(due_value, datetime):
+            date_start = due_value.date()
+            time_start = due_value.time()
+        else:
+            date_start = due_value
+            time_start = None
 
         e = Activity(
             activity_type="task",
             summary=summary,
-            date_start=date_start.date(),
+            date_start=date_start,
             time_start=time_start,
             description=desc
         )

@@ -5,7 +5,7 @@ from typing import Annotated
 
 from typer import Context, Option, Typer
 
-from server.app import App, AppServer
+from server.app import App, create_app
 from server.config import AppConfig
 
 cli = Typer(add_completion=False)
@@ -61,13 +61,11 @@ def once(ctx: Context):
 def start(ctx: Context):
     """ Start the server """
     import uvicorn
-    from fastapi import FastAPI
 
-    app: AppServer = AppServer(ctx.obj.config)
-    f = FastAPI()
-    f.include_router(app.router)
+    config = ctx.obj.config
+    f = create_app(config)
 
-    uvicorn.run(f, host=str(app.config.server.host), port=app.config.server.port)
+    uvicorn.run(f, host=str(config.server.host), port=config.server.port)
 
 def configure_logging(filepath: Path, log_level: str, log_to_console: bool = False):  # noqa: FBT002, FBT001
         """Reconfigure the ROOT logger, not the module's logger"""

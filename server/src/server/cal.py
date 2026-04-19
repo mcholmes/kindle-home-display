@@ -2,27 +2,33 @@ import logging
 from pathlib import Path
 
 import pendulum
-from pydantic import BaseModel, ConfigDict, PositiveInt
+from pydantic import PositiveInt
 
 from server.activity import Activity
 from server.calendar_plugins.gcal import GCal
 
 logger = logging.getLogger(__name__)
 
-class Calendar(BaseModel):
+
+class Calendar:
     """
-    A class to connect to a calendar provider and retrieve events which can be easily rendered.
-    The function of this is mostly parsing / formatting.
-    The current calendar provider is Google Calendar, but this is pluggable.
+    Connects to a calendar provider and retrieves events as Activity objects.
+    Computes the query date window from the current date and days_to_show.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    credentials: Path | str
-    calendar_ids: str | list[str]
-    current_date: pendulum.DateTime
-    days_to_show: PositiveInt = 2
-    exclude_default_calendar: bool = False
+    def __init__(
+        self,
+        credentials: Path | str,
+        calendar_ids: str | list[str],
+        current_date: pendulum.DateTime,
+        days_to_show: PositiveInt = 2,
+        exclude_default_calendar: bool = False,  # noqa: FBT001, FBT002
+    ):
+        self.credentials = credentials
+        self.calendar_ids = calendar_ids
+        self.current_date = current_date
+        self.days_to_show = days_to_show
+        self.exclude_default_calendar = exclude_default_calendar
 
     @property
     def start_date(self) -> pendulum.DateTime:

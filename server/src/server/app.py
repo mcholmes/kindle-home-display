@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pendulum
-from fastapi import APIRouter, Response
+from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
@@ -14,13 +14,16 @@ from server.todoist import get_tasks_todoist
 
 logger = logging.getLogger(__name__)
 
+
 class App:
+    """Core application logic: fetches data, renders dashboard images."""
+
     config: AppConfig
 
     def __init__(self, config: AppConfig):
         self.config = config
 
-    def get_logs(self, file_name) -> str:
+    def get_logs(self, file_name: str) -> str:
         logs = Path(self.config.server.server_dir) / file_name
         try:
             with Path.open(logs) as f:
@@ -117,7 +120,6 @@ class App:
         calendar_ids = config.ids.values()
         credentials = config.creds
 
-        # TODO: do I really need a Calendar object? It doesn't do much any more
         cal = Calendar(
             credentials=credentials,
             calendar_ids=calendar_ids,
@@ -127,45 +129,29 @@ class App:
 
         return cal.get_events_cal()
 
-class AppServer(App):
 
-    router: APIRouter = APIRouter()
+def create_app(config: AppConfig) -> FastAPI:
+    """Create and configure a FastAPI application with all routes."""
+    app = App(config)
+    fastapi_app = FastAPI()
 
-    def __init__(self, config: AppConfig):
-        self.config = config
-        self.configure_routes()
+    @fastapi_app.get("/", response_class=HTMLResponse)
+    def root():
+        return f"For docs on how to use this API, go to /docs."
 
-    def configure_routes(self):
-        self.router = APIRouter()
-        self.router.add_api_route(
-            "/",
-            response_class=HTMLResponse,
-            endpoint=self.root, methods=["GET"]
-            )
+    @fastapi_app.get("/dashboard")
+    def dashboard():
+        return app.get_dashboard_response()
 
-        self.router.add_api_route(
-            "/dashboard",
-            response_class=Response,
-            endpoint=self.get_dashboard_response,
-            methods=["GET"],
-            )
+    @fastapi_app.get("/logs/server", response_class=PlainTextResponse)
+    def server_logs():
+        return app.get_server_logs()
 
-        self.router.add_api_route(
-            "/logs/server",
-            response_class=PlainTextResponse,
-            endpoint=self.get_server_logs,
-            methods=["GET"],
-            )
-
-        self.router.add_api_route(
-            "/logs/device",
-            response_class=PlainTextResponse,
-            endpoint=self.get_device_logs,
-            methods=["GET"],
-            )
-
-        logger.debug("Started server.")
+    @fastapi_app.get("/logs/device", response_class=PlainTextResponse)
+    def device_logs():
         # TODO: add a POST for device to send its logs back to server
+        return app.get_device_logs()
 
-    def root(self) -> str:
-        return f"For docs on how to use this API, go to localhost:{self.config.server.port}/docs."
+    logger.debug("Configured routes.")
+
+    return fastapi_app

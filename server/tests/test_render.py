@@ -9,7 +9,8 @@ import pytest
 from PIL import Image
 
 from server.activity import Activity
-from server.render import Font, FontFactory, Renderer
+from server.font import Font, FontFactory
+from server.render import RenderConfig, Renderer
 
 FONT_DIR = Path(__file__).resolve().parent.parent / "src" / "server" / "font"
 FONT_DIR_STR = str(FONT_DIR)
@@ -22,19 +23,26 @@ FONT_MAP = {
 }
 
 
+def _make_config(**overrides) -> RenderConfig:
+    """Create a RenderConfig with sensible test defaults."""
+    defaults = {
+        "image_width": 800,
+        "image_height": 600,
+        "fonts_file_dir": FONT_DIR_STR,
+        "font_style_map": FONT_MAP,
+        "margin_x": 50,
+        "margin_y": 50,
+        "top_row_y": 200,
+        "space_between_sections": 80,
+    }
+    defaults.update(overrides)
+    return RenderConfig(**defaults)
+
+
 @pytest.fixture
 def renderer() -> Renderer:
     """Create a minimal Renderer for testing."""
-    return Renderer(
-        image_width=800,
-        image_height=600,
-        fonts_file_dir=FONT_DIR_STR,
-        font_style_map=FONT_MAP,
-        margin_x=50,
-        margin_y=50,
-        top_row_y=200,
-        space_between_sections=80,
-    )
+    return Renderer(_make_config())
 
 
 @pytest.fixture
@@ -142,6 +150,32 @@ class TestFontFactory:
             assert val.endswith(".ttf")
 
 
+# ========== RenderConfig ==========
+
+
+class TestRenderConfig:
+    def test_extra_fields_rejected(self):
+        """RenderConfig should reject unknown fields (extra='forbid')."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            RenderConfig(
+                image_width=800,
+                image_height=600,
+                unknown_field="should fail",
+            )
+
+    def test_defaults(self):
+        """RenderConfig should have sensible defaults for optional fields."""
+        config = RenderConfig(image_width=800, image_height=600)
+        assert config.background_colour == "white"
+        assert config.margin_x == 0
+        assert config.margin_y == 0
+        assert config.rotate_angle == 0
+        assert config.activity_line_spacing == 1.1
+        assert config.bullet_formats == {"event": "•", "task": ">"}
+
+
 # ========== Renderer ==========
 
 
@@ -173,7 +207,6 @@ class TestRenderer:
 
     def test_render_single_activity_with_bullet(self, renderer, draw):
         font = Font(draw, FONT_DIR / "Lexend-Regular.ttf", 24)
-        # Should not raise
         renderer.render_single_activity(
             position=(50, 100),
             activity_text="Test event",
@@ -214,19 +247,9 @@ class TestRenderer:
         y_after = renderer.render_activities("Today", [], 250)
         assert y_after > 250
 
-    def test_render_activities_overflow_shows_more(self, renderer):
+    def test_render_activities_overflow_shows_more(self):
         """When events exceed the image height, a '+ N more...' message should appear."""
-        # Create a small renderer that will overflow
-        small = Renderer(
-            image_width=800,
-            image_height=300,
-            fonts_file_dir=FONT_DIR_STR,
-            font_style_map=FONT_MAP,
-            margin_x=50,
-            margin_y=50,
-            top_row_y=200,
-            space_between_sections=80,
-        )
+        small = Renderer(_make_config(image_height=300))
         events = [
             Activity(activity_type="event", summary=f"Event {i}", date_start=date(2025, 1, 5), time_start=time(i % 24, 0))
             for i in range(20)
@@ -236,7 +259,6 @@ class TestRenderer:
 
     def test_render_date(self, renderer):
         renderer.render_date("19", "Sat", "Apr")
-        # Verify image was modified by checking it's not all white
         png = renderer.get_png()
         assert len(png) > 100
 
@@ -259,7 +281,6 @@ class TestRenderer:
         png = renderer.get_png()
 
         assert png[:4] == b"\x89PNG"
-        # Verify it's a valid image
         import io
 
         img = Image.open(io.BytesIO(png))
@@ -267,17 +288,7 @@ class TestRenderer:
         assert img.size[1] > 0
 
     def test_render_all_with_rotation(self):
-        r = Renderer(
-            image_width=800,
-            image_height=600,
-            fonts_file_dir=FONT_DIR_STR,
-            font_style_map=FONT_MAP,
-            margin_x=50,
-            margin_y=50,
-            top_row_y=200,
-            space_between_sections=80,
-            rotate_angle=90,
-        )
+        r = Renderer(_make_config(rotate_angle=90))
         now = pendulum.datetime(2025, 4, 19, 14, 30, tz="Europe/London")
         r.render_all(now, [], [])
         png = r.get_png()
@@ -294,14 +305,3 @@ class TestRenderer:
         renderer.render_all(now, [], [])
         png = renderer.get_png()
         assert png[:4] == b"\x89PNG"
-
-    def test_extra_fields_rejected(self):
-        """Renderer should reject unknown fields (extra='forbid')."""
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-            Renderer(
-                image_width=800,
-                image_height=600,
-                unknown_field="should fail",
-            )

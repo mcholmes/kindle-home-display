@@ -142,12 +142,12 @@ refresh_dashboard() {
 
   # Get image
   log_info "Retrieving image"
-  "$FETCH_DASHBOARD_CMD" "$DASH_PNG"
+  error_msg=$("$FETCH_DASHBOARD_CMD" "$DASH_PNG")
   fetch_status=$?
 
   if [ "$fetch_status" -ne 0 ]; then
-    log_error "Not updating screen, fetch-dashboard returned $fetch_status"
-    /usr/sbin/eips "Error retrieving dashboard!"
+    log_error "Not updating screen, fetch-dashboard returned $fetch_status. Error: $error_msg"
+    /usr/sbin/eips "Fetch Error: $error_msg"
     return 1
   fi
 
@@ -198,6 +198,16 @@ rtc_sleep() {
 
 main_loop() {
   while true; do
+    # Log rotation (approx 1MB)
+    log_file="$DIR/logs/dash.log"
+    if [ -f "$log_file" ]; then
+      log_size=$(wc -c <"$log_file" 2>/dev/null || echo 0)
+      if [ "$log_size" -gt 1048576 ]; then
+         tail -n 1000 "$log_file" > "$log_file.tmp"
+         mv "$log_file.tmp" "$log_file"
+      fi
+    fi
+
     log_battery_stats
 
     # Enable wifi

@@ -69,6 +69,11 @@ start:
 stop:
 	ssh $(REMOTE_HOST) -t "$(REMOTE_DIR)/stop.sh"
 
+status:
+	ssh $(REMOTE_HOST) -t "ps aux | grep '[d]ash.sh'"
+
+deploy: dist push stop start
+
 rsync:
 	rsync -ri --rsync-path=$(REMOTE_DIR)/rsync-arm 	dist/* $(REMOTE_HOST):$(REMOTE_DIR)
 	@echo ""
@@ -84,4 +89,4 @@ print-logs:
 copy-logs:
 	scp $(REMOTE_HOST):$(REMOTE_DIR)/logs/*.log .
 
-.PHONY: clean watch tarball format ssh start stop rsync push print-logs copy-logs
+.PHONY: clean watch tarball format ssh start stop rsync push print-logs copy-logs status deploy

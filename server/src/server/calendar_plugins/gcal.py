@@ -1,12 +1,9 @@
 import logging
-import pickle
 from pathlib import Path
 
 import pendulum
 from gcsa.google_calendar import GoogleCalendar
-from google.auth.transport.requests import Request
 from google.oauth2 import service_account
-from google_auth_oauthlib.flow import InstalledAppFlow
 
 from server.activity import Activity
 
@@ -14,7 +11,6 @@ logger = logging.getLogger(__name__)
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.WARNING)
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
-USE_SERVICE_ACCOUNT = True
 
 
 class GCal:
@@ -23,16 +19,6 @@ class GCal:
     """
 
     def __init__(self, creds_path: Path):
-        # Uncomment if using general oauth flow ###
-        # current_path = str(pathlib.Path(__file__).parent.absolute())
-        # creds_filename = 'credentials_service.json' if USE_SERVICE_ACCOUNT else 'credentials_oauth.json'
-        # creds_path = os.path.join(current_path, creds_filename)
-        # token_path = os.path.join(current_path, "token.pickle")
-        # if not USE_SERVICE_ACCOUNT and (not self.is_token_valid(token_path)):
-        #     logger.info("Invalid token, regenerating.")
-        #     self.generate_oauth_token(creds_path=creds_path, token_path=token_path)
-        # self.calendar = self.create_calendar_oauth(creds_path)
-
         if not Path.exists(creds_path):
             err = f"No credentials file found at {creds_path}"
             raise FileNotFoundError(err)
@@ -91,16 +77,12 @@ class GCal:
 
         return available_calendars
 
-    def accept_shared_calendar(self, calendar_id):
+    def accept_shared_calendar(self, calendar_id: str):
         """Only needed for service user.
         TODO: surface this to CLI?"""
         # https://issuetracker.google.com/issues/148804709#comment2
         calendar_list_entry = {"id": calendar_id}
         self.calendar.service.calendarList().insert(body=calendar_list_entry).execute()
-
-    @staticmethod
-    def create_calendar_oauth(creds_path):
-        return GoogleCalendar(credentials_path=creds_path, read_only=True)
 
     @staticmethod
     def create_calendar_service_user(creds_path):
@@ -118,11 +100,6 @@ class GCal:
         if (self.available_calendars is None) or len(self.available_calendars) == 0:
             err = "No calendars available."
             raise ValueError(err)
-
-        invalid_calendars = []
-        # for calendar in calendars_to_validate:
-        #     if calendar not in self.available_calendars:
-        #         invalid_calendars.append(calendar)
 
         invalid_calendars = [calendar for calendar in calendars_to_validate if calendar not in self.available_calendars]
 

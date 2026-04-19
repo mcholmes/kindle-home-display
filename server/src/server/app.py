@@ -1,5 +1,5 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pendulum
@@ -61,9 +61,6 @@ class App:
                 self.get_tasks, current_date
             )  # TODO: make this optional depending on config.toml
             future_appointments = executor.submit(self.get_appointments, current_date)
-
-            # Wait for both API calls to complete
-            wait([future_tasks, future_appointments])
 
             tasks = future_tasks.result()
             appointments = future_appointments.result()
@@ -127,17 +124,6 @@ class App:
         )
 
         return cal.get_events_cal()
-
-    def get_weather():
-        ...
-        # owm_api_key = api["owm_api_key"]  # OpenWeatherMap API key. Required to retrieve weather forecast.
-        # lat = config["lat"] # Latitude in decimal of the location to retrieve weather forecast for
-        # lon = config["lon"] # Longitude in decimal of the location to retrieve weather forecast for
-        # owmModule = OWMModule(owm_api_key)
-        # current_weather, hourly_forecast, daily_forecast = owmModule.get_weather(lat, lon, from_cache=True)
-        # # current_weather_text=string.capwords(hourly_forecast[1]["weather"][0]["description"]),
-        # # current_weather_id=hourly_forecast[1]["weather"][0]["id"],
-        # # current_weather_temp=round(hourly_forecast[1]["temp"]),
 
 class AppServer(App):
 

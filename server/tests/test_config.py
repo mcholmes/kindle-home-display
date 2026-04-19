@@ -4,7 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from server.config import AppConfig, MultipleFilesFoundError, find_file_in_dir, get_dict_from_file
+from server.config import (
+    AppConfig,
+    MultipleFilesFoundError,
+    WeatherConfig,
+    find_file_in_dir,
+    get_dict_from_file,
+    get_required_fields,
+)
 
 
 @pytest.fixture
@@ -169,3 +176,93 @@ def test_get_dict_from_file_toml(tmp_path):
 
     result = get_dict_from_file(f)
     assert result == {"key": "value"}
+
+def test_get_dict_from_file_yml(tmp_path):
+    """Test .yml extension (in addition to .yaml)."""
+    f = tmp_path / "file.yml"
+    f.write_text("key: value")
+
+    result = get_dict_from_file(f)
+    assert result == {"key": "value"}
+
+
+# ========== get_required_fields ==========
+
+def test_get_required_fields_non_recursive():
+    fields = list(get_required_fields(AppConfig))
+    assert "server" in fields
+    assert "image" in fields
+    # Optional fields should not appear
+    assert "api_keys" not in fields
+    assert "calendar" not in fields
+
+def test_get_required_fields_recursive():
+    """Recursive mode should yield leaf fields from nested models -- covers line 58."""
+    fields = list(get_required_fields(AppConfig, recursive=True))
+    # Server and Image have no non-optional fields without defaults
+    # except ImageConfig.width and ImageConfig.height
+    assert "width" in fields
+    assert "height" in fields
+
+
+# ========== WeatherConfig ==========
+
+def test_weather_config():
+    w = WeatherConfig(latitude=51.5, longitude=-0.1)
+    assert w.latitude == 51.5
+    assert w.longitude == -0.1
+
+
+# ========== AppConfig.from_dir ==========
+
+def test_from_dir_loads_config_and_api_keys(tmp_path, valid_server_config, valid_image_config):
+    """from_dir should load config.toml and api_keys.json from a directory."""
+    import json
+
+    config_content = f"""
+[server]
+host = "{valid_server_config['host']}"
+port = {valid_server_config['port']}
+server_dir = "{valid_server_config['server_dir']}"
+
+[image]
+width = {valid_image_config['width']}
+height = {valid_image_config['height']}
+"""
+    (tmp_path / "config.toml").write_text(config_content)
+
+    api_keys = {"todoist": "test-api-key", "owm": "weather-key"}
+    (tmp_path / "api_keys.json").write_text(json.dumps(api_keys))
+
+    config = AppConfig.from_dir(tmp_path)
+
+    assert config.server.host == IPv4Address("127.0.0.1")
+    assert config.server.port == 8000
+    assert config.image.width == 1072
+    assert config.image.height == 1448
+    assert config.api_keys is not None
+    assert config.api_keys["todoist"].get_secret_value() == "test-api-key"
+
+def test_from_dir_without_api_keys(tmp_path, valid_server_config, valid_image_config):
+    """from_dir should work even when api_keys file is missing."""
+    config_content = f"""
+[server]
+host = "{valid_server_config['host']}"
+port = {valid_server_config['port']}
+server_dir = "{valid_server_config['server_dir']}"
+
+[image]
+width = {valid_image_config['width']}
+height = {valid_image_config['height']}
+"""
+    (tmp_path / "config.toml").write_text(config_content)
+
+    config = AppConfig.from_dir(tmp_path)
+
+    assert config.server.host == IPv4Address("127.0.0.1")
+    assert config.api_keys is None
+
+def test_from_dir_no_config_file(tmp_path):
+    """from_dir should raise FileNotFoundError if no config file exists."""
+    with pytest.raises(FileNotFoundError):
+        AppConfig.from_dir(tmp_path)

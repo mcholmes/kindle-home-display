@@ -12,6 +12,7 @@ It requires Python 3.11+ and is designed to run on a Raspberry Pi.
 - Calendar (Google Calendar)
 - Tasks (Todoist)
 - Weather, soon (OpenWeatherMap)
+- **Low Battery Overlay**: The Kindle will display its battery percentage in the corner when it drops below 10%.
 
 ## Installation & usage
 
@@ -67,11 +68,27 @@ The server is configured using a TOML file (`config.toml`). This is documented i
 ### Device Setup (Kindle)
 
 1. Jailbreak your Kindle, using any method (I used LanguageBreak)
-2. Install KUAL
-3. Download the latest release and copy it to `/mnt/us/dashboard`
-4. Open KUAL and tap `Start dashboard`
-
-:warning: TODO: complete this.
+2. Install KUAL and a terminal emulator like [KTerm](https://www.mobileread.com/forums/showthread.php?t=277427) to find your Kindle's IP address.
+3. Configure your Kindle environment variables in `device/src/local/env.sh` before deploying:
+   - `DASHBOARD_URL`: Point this to your server (e.g. `http://<PI_IP>:8000/dashboard`)
+   - `TIMEZONE`: Set your timezone (e.g. `Europe/London`)
+   - `REFRESH_SCHEDULE`: Cron schedule for waking up to fetch updates.
+4. From your development machine, ensure your `~/.ssh/config` has a `kindle` host entry.
+5. Deploy the scripts and compiled binaries to the Kindle (from the `device/` directory):
+   ```bash
+   make deploy
+   ```
+   
+Other useful targets (run from `device/`):
+```bash
+make deploy             # build, push, stop, and start the client
+make status             # check if the dashboard process is running
+make test               # run shell tests and rust unit tests
+make format             # auto-format all shell scripts
+make start / make stop  # start/stop the dashboard script remotely
+make ssh                # open shell on the Kindle
+make print-logs         # tail logs from the Kindle
+```
 
 ## License
 

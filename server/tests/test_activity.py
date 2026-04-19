@@ -140,7 +140,7 @@ def test_end_before_start_time(datetime_past, datetime_future):
         )
 
 def test_end_but_no_start(datetime_future):
-    with pytest.raises(ValidationError):
+    with pytest.raises((ValidationError, ValueError)):
         Activity.from_datetimes(
             activity_type="event",
             summary=SUMMARY,

@@ -161,6 +161,14 @@ refresh_dashboard() {
     /usr/sbin/eips -g "$DASH_PNG" >/dev/null
   fi
 
+  # Overlay battery percentage if low
+  battery_level=$(gasgauge-info -c)
+  battery_level_numeric=${battery_level%?}
+  if [ "$battery_level_numeric" -le "$LOW_BATTERY_THRESHOLD_PERCENT" ]; then
+    # Print near bottom left with margin (col 2, row 38)
+    /usr/sbin/eips 2 38 "Battery $battery_level"
+  fi
+
   num_refresh=$((num_refresh + 1))
 }
 

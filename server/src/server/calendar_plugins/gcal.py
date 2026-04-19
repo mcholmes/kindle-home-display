@@ -28,6 +28,7 @@ class GCal:
 
     @staticmethod
     def is_token_valid(token_path):
+        import pickle
         if not Path.exists(token_path):
             return False
 
@@ -43,6 +44,7 @@ class GCal:
         To obtain Credentials.json, follow the instructions listed in the following link.
         https://developers.google.com/calendar/api/quickstart/python
         """
+        import pickle
 
         # If modifying these scopes, delete the file token.pickle.
 
@@ -57,8 +59,10 @@ class GCal:
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
+                from google.auth.transport.requests import Request
                 creds.refresh(Request())
             else:
+                from google_auth_oauthlib.flow import InstalledAppFlow
                 flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run

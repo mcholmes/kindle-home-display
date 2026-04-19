@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PIL import ImageDraw, ImageFont
-from loguru import logger
+
 
 class Font:
     """

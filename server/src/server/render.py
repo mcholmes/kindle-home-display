@@ -1,7 +1,6 @@
 import io
 import logging
 
-# if TYPE_CHECKING:
 import pendulum
 from pathlib import Path
 
@@ -9,11 +8,6 @@ from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
 
 from server.activity import Activity
-
-"""
-TODO:
-- decide what to do with weather. next N hours? just icon/temp?
-"""
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +122,6 @@ class Renderer(BaseModel):
             "regular": "Lexend-Regular.ttf",
             "bold": "Lexend-Bold.ttf",
             "extrabold": "Lexend-ExtraBold.ttf",
-            "weather": "weathericons-regular-webfont.ttf",
         },
     )
 
@@ -308,29 +301,6 @@ class Renderer(BaseModel):
             anchor="ls",
         )
 
-    # TODO: this won't currently work!
-    def render_weather(self, text: str, icon: str):
-        weather_icon = self._ff.get("weather", 150)
-        weather_text = self._ff.get("regular")
-
-        weather_text.write(
-            (
-                self.image_width - self.margin_x - weather_text.width(text),
-                self.top_row_y,
-            ),
-            text,
-            colour="gray",
-            anchor="ls",
-        )
-        weather_icon.write(
-            (
-                self.image_width - self.margin_x - weather_icon.width(icon),
-                self.top_row_y - weather_text.height(),
-            ),
-            icon,
-            anchor="ls",
-        )
-
     def render_last_updated(self, time: str):
         text = f"Refreshed {time}"
         f = self._ff.get("regular", 20)
@@ -346,15 +316,12 @@ class Renderer(BaseModel):
         todays_date: pendulum.DateTime,
         events_today: list[Activity],
         events_tomorrow: list[Activity],
-        weather = None
     ) -> None:
-        # Render top row
         day = todays_date.format("D")
         day_of_week = todays_date.format("ddd")
         month = todays_date.format("MMM")
         time = todays_date.format("HH:mm")
         self.render_date(day, day_of_week, month)
-        # render_weather(text="Broken clouds | 11º", icon="\uf00d")
 
         y0 = self.top_row_y + self.space_between_sections
         y1 = self.render_activities("Today", events_today, y0)

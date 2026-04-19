@@ -19,7 +19,6 @@ FONT_MAP = {
     "regular": "Lexend-Regular.ttf",
     "bold": "Lexend-Bold.ttf",
     "extrabold": "Lexend-ExtraBold.ttf",
-    "weather": "weathericons-regular-webfont.ttf",
 }
 
 
@@ -238,11 +237,6 @@ class TestRenderer:
     def test_render_date(self, renderer):
         renderer.render_date("19", "Sat", "Apr")
         # Verify image was modified by checking it's not all white
-        png = renderer.get_png()
-        assert len(png) > 100
-
-    def test_render_weather(self, renderer):
-        renderer.render_weather("Cloudy | 15°", "\uf00d")
         png = renderer.get_png()
         assert len(png) > 100
 

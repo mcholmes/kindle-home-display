@@ -22,7 +22,7 @@ cov = [
 types = "mypy --install-types --non-interactive {args:src/server tests}"
 perf = "python -mcProfile -o program.prof src/server/__main__.py {args} && tuna program.prof"
 
-[envs.py39]
+[envs.py311]
 template = "default"
 python = "3.11"
 

@@ -117,7 +117,7 @@ class App:
     def get_appointments(self, current_date: pendulum.DateTime) -> list[Activity]:
         config = self.config.calendar
 
-        calendar_ids = config.ids.values()
+        calendar_ids = list(config.ids.values())
         credentials = config.creds
 
         cal = Calendar(

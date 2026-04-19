@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$DIR/../src/local/env.sh"
 
-# shellcheck source=src/local/env.sh
+# shellcheck source=../src/local/env.sh
 . "$ENV_FILE"
 
 # Assert variables are exported correctly

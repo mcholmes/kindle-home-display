@@ -99,7 +99,7 @@ class Activity(BaseModel):
         return delta.days
 
 
-def datetime_to_time(dt: pendulum.DateTime | date) -> time | None:
+def datetime_to_time(dt: pendulum.DateTime | date | None) -> time | None:
 
     if dt is None:
         return None
@@ -118,7 +118,7 @@ def datetime_to_time(dt: pendulum.DateTime | date) -> time | None:
     err = f"Input must be of type datetime or date, not {type(dt)}"
     raise TypeError(err)
 
-def datetime_to_date(dt: pendulum.DateTime | date) -> date | None:
+def datetime_to_date(dt: pendulum.DateTime | date | None) -> date | None:
     """
     This is tricky because of how the standard library treats dates and datetimes.
     See https://github.com/python/mypy/issues/9015

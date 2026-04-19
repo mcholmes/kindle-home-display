@@ -300,3 +300,14 @@ class TestRenderer:
         renderer.render_all(now, [], [])
         png = renderer.get_png()
         assert png[:4] == b"\x89PNG"
+
+    def test_extra_fields_rejected(self):
+        """Renderer should reject unknown fields (extra='forbid')."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            Renderer(
+                image_width=800,
+                image_height=600,
+                unknown_field="should fail",
+            )

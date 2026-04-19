@@ -23,17 +23,17 @@ classifiers = [
 ]
 
 dependencies = [
-  "pendulum>=3,<4",
-  "pydantic",
-  "pillow",
-  "gcsa",
-  "requests",
-  "pyyaml",
-  "fastapi",
-  "uvicorn",
-  "typer",
-  "todoist-api-python",
-  "loguru"
+  "pendulum~=3.2",
+  "pydantic~=2.13",
+  "pillow~=12.2",
+  "gcsa~=2.6",
+  "requests~=2.33",
+  "pyyaml~=6.0",
+  "fastapi~=0.136",
+  "uvicorn~=0.44",
+  "typer~=0.24",
+  "todoist-api-python~=4.0",
+  "loguru~=0.7"
 ]
 
 [project.urls]

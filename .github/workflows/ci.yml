@@ -20,3 +20,16 @@ jobs:
           SHFMT_OPTS: -i 4
         with:
           sh_checker_comment: false
+
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Hatch
+        run: pip install hatch
+      - name: Run tests
+        run: cd server && hatch run test

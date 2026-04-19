@@ -4,11 +4,11 @@
 
 
 DEBUG=${DEBUG:-false}
-[[ "$DEBUG" = true ]] && set -x
+[ "$DEBUG" = true ] && set -x
 
 DIR="$(dirname "$0")"
 
-source "$DIR/logging.sh"
+. "$DIR/logging.sh"
 
 # Source environment variables
 ENV_FILE="$DIR/local/env.sh"
@@ -184,11 +184,11 @@ rtc_sleep() {
   else
     # lipc-set-prop -i com.lab126.powerd rtcWakeup "$duration" # doesn't seem to work. see https://www.mobileread.com/forums/showpost.php?p=3221077&postcount=7
 
-    if [ $duration -lt 5 ]; then
+    if [ "$duration" -lt 5 ]; then
       duration=60
     fi
     
-    rtcwake -d /dev/rtc1 -m mem -s $duration >/dev/null
+    rtcwake -d /dev/rtc1 -m mem -s "$duration" >/dev/null
     
     # echo -n "$duration" >"$RTC"
     # echo "mem" >/sys/power/state # suspend to RAM

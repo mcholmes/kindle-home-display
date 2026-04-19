@@ -117,6 +117,8 @@ class ImageConfig(BaseModel):
     margin_x: int = Field(gt = 0, default = 100, description="Margin from left and right edges of image, in pixels.")
     margin_y: int = Field(gt = 0, default = 200, description="Margin from top and bottom edges of image, in pixels.")
     rotate_angle: int = Field(default = 0, description="Angle to rotate the rendered image")
+    top_row_y: int = Field(default = 250, description="Pixels from the top to place the date")
+    space_between_sections: int = Field(default = 100, description="Vertical pixels between header, today, and tomorrow")
 
 class CalendarConfig(BaseModel):
     display_timezone: str = "Europe/London"

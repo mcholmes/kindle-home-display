@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from server.activity import Activity, group_events_by_relative_day, sort_by_time
 from server.cal import Calendar
 from server.config import AppConfig
-from server.render import Renderer
+from server.render import RenderConfig, Renderer
 from server.todoist import get_tasks_todoist
 
 logger = logging.getLogger(__name__)
@@ -82,15 +82,17 @@ class App:
         events_today = sort_by_time(events.get(0, []))
         events_tomorrow = sort_by_time(events.get(1, []))
 
-        r = Renderer(
-            image_width=self.config.image.width,
-            image_height=self.config.image.height,
-            rotate_angle=self.config.image.rotate_angle,
-            margin_x=self.config.image.margin_x,
-            margin_y=self.config.image.margin_y,
-            top_row_y=250,
-            space_between_sections=100,
+        cfg = self.config.image
+        render_config = RenderConfig(
+            image_width=cfg.width,
+            image_height=cfg.height,
+            rotate_angle=cfg.rotate_angle,
+            margin_x=cfg.margin_x,
+            margin_y=cfg.margin_y,
+            top_row_y=cfg.top_row_y,
+            space_between_sections=cfg.space_between_sections,
         )
+        r = Renderer(render_config)
 
         r.render_all(
             todays_date=current_date,

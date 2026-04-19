@@ -1,161 +1,77 @@
 import io
 import logging
-
-import pendulum
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveFloat, PositiveInt, PrivateAttr
+import pendulum
+from PIL import Image, ImageDraw
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, PositiveFloat, PositiveInt
 
 from server.activity import Activity
+from server.font import Font, FontFactory
 
 logger = logging.getLogger(__name__)
 
-script_dir = Path(__file__).resolve().parent
+_script_dir = Path(__file__).resolve().parent
 
-class Font:
-    """
-    An abstraction over PIL's ImageFont.
-    - Allows easier interrogation & reuse of calculated height.
-    - Allows fonts to draw themselves, rather than passing around ImageFonts.
-    """
-
-    def __init__(self, draw: ImageDraw, file: Path, size: int):
-        self._draw = draw
-
-        f = ImageFont.truetype(str(file), size)
-        self._font = f
-        self._height = f.getbbox("lq")[
-            3
-        ]  # max height for a line of this size, not its actual height
-
-    def width(self, text: str) -> int:
-        return self._font.getbbox(text)[2]
-
-    def height(self, text: str | None = None) -> int:
-        if text is None:
-            return self._height
-
-        return self._font.getbbox(text)[3]
-
-    def size(self, text: str) -> tuple[int, int]:
-        return self.width(text), self.height(text)
-
-    def write(
-        self,
-        position: tuple,
-        text: str,
-        colour: str = "black",
-        anchor: str | None = None,
-    ) -> None:
-        self._draw.text(position, text, font=self._font, fill=colour, anchor=anchor)
-
-    def image_font(self) -> ImageFont:
-        return self._font
+_DEFAULT_FONT_MAP = {
+    "extralight": "Lexend-ExtraLight.ttf",
+    "light": "Lexend-Light.ttf",
+    "regular": "Lexend-Regular.ttf",
+    "bold": "Lexend-Bold.ttf",
+    "extrabold": "Lexend-ExtraBold.ttf",
+}
 
 
-class FontFactory:
-    def __init__(
-        self,
-        draw: ImageDraw,
-        font_dir: Path | None = None,
-        font_map: dict[str, str] | None = None,
-    ):
-        self.default_size = 48
+class RenderConfig(BaseModel):
+    """Validated configuration for the Renderer. Separate from drawing state."""
 
-        if font_dir is None:
-            current_path = Path(__file__).parent.absolute()
-            self.font_dir = current_path / "font"
-        else:
-            self.font_dir = Path(font_dir)
-
-        if font_map is None:
-            # Just use the file names as the alias
-            self.font_map = {
-                f.name: f.name for f in self.font_dir.iterdir() if f.suffix == ".ttf"
-            }
-        else:
-            self.font_map = font_map
-
-        self.draw = draw
-
-        # example:
-        # font_map = {
-        #         "light": "Lexend-Light.ttf",
-        #         "regular": "Lexend-Regular.ttf",
-        #         "bold": "Lexend-Bold.ttf",
-        #         "extrabold": "Lexend-ExtraBold.ttf",
-        #         "weather": "weathericons-regular-webfont.ttf"
-        # }
-
-    def get(self, name: str, size: int | None = None):
-        if size is None:
-            size = self.default_size
-
-        if name not in self.font_map:
-            err = f"Font name not in defined list. Valid values are: {self.font_map.values()}"
-            raise ValueError(err)
-
-        font_file = self.font_dir / self.font_map[name]
-
-        return Font(self.draw, font_file, size)
-
-
-class Renderer(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    # Mandatory fields
     image_height: PositiveInt = Field(description="Image height in pixels")
     image_width: PositiveInt = Field(description="Image width in pixels")
 
-    # Optional fields
     background_colour: str = Field(default="white")
     fonts_file_dir: str = Field(
-        default = script_dir / "font",
+        default=_script_dir / "font",
         description="Path to directory containing .ttf fonts",
     )
     font_style_map: dict[str, str] = Field(
         description="Map of style names to font names",
-        default={
-            "extralight": "Lexend-ExtraLight.ttf",
-            "light": "Lexend-Light.ttf",
-            "regular": "Lexend-Regular.ttf",
-            "bold": "Lexend-Bold.ttf",
-            "extrabold": "Lexend-ExtraBold.ttf",
-        },
+        default_factory=lambda: dict(_DEFAULT_FONT_MAP),
     )
 
     activity_line_spacing: PositiveFloat = Field(
         default=1.1,
-        description="Multiple of height to space apart bullet points.")
+        description="Multiple of height to space apart bullet points.",
+    )
 
     bullet_formats: dict[str, str] = Field(
         default={"event": "•", "task": ">"},
-        description="Bullet point markers. Can be an empty string."
+        description="Bullet point markers. Can be an empty string.",
     )
 
     margin_x: NonNegativeInt = Field(default=0, description="Left and right margins")
     margin_y: NonNegativeInt = Field(default=0, description="Top and bottom margins")
     top_row_y: NonNegativeInt = Field(
-        default=0, description="Pixels from the top to place the date & weather"
+        default=0, description="Pixels from the top to place the date",
     )
     space_between_sections: NonNegativeInt = Field(
-        default=50, description="Vertical pixels between header, today, and tomorrow"
+        default=50, description="Vertical pixels between header, today, and tomorrow",
     )
     rotate_angle: int = Field(
         default=0,
-        description="Angle in degrees to rotate the image after rendering. Useful for multiple-column layouts?",
+        description="Angle in degrees to rotate the image after rendering.",
     )
 
-    # Private fields computed post-init
-    _image: Image = PrivateAttr()
-    _draw: ImageDraw = PrivateAttr()
-    _ff: FontFactory = PrivateAttr()
 
-    def model_post_init(self, __context) -> None:
-        self._image = Image.new("L", (self.image_width, self.image_height), self.background_colour)
+class Renderer:
+    """Renders a dashboard image from Activity data using a validated RenderConfig."""
+
+    def __init__(self, config: RenderConfig):
+        self._config = config
+        self._image = Image.new("L", (config.image_width, config.image_height), config.background_colour)
         self._draw = ImageDraw.Draw(self._image)
-        self._ff = FontFactory(self._draw, self.fonts_file_dir, self.font_style_map)
+        self._ff = FontFactory(self._draw, config.fonts_file_dir, config.font_style_map)
 
     @staticmethod
     def truncate_with_ellipsis(text: str, max_width: int, font: Font) -> str:
@@ -181,6 +97,7 @@ class Renderer(BaseModel):
         Writes a bullet-point, some grey text (prefix), then some black text (activity_text).
         The black text is truncated with ... if it extends past the right-hand margin.
         """
+        c = self._config
         x_0, y = position
 
         # Write the bullet
@@ -190,7 +107,7 @@ class Renderer(BaseModel):
 
             width_bullet = font.width(bullet)
         else:
-            width_bullet = 0 # needed to know where to start writing the prefix
+            width_bullet = 0  # needed to know where to start writing the prefix
 
         # Write the prefix text
         x_prefix = x_0 + width_bullet
@@ -204,7 +121,7 @@ class Renderer(BaseModel):
 
         # Write the main text
         x_activity_text = x_prefix + width_prefix
-        max_width = self.image_width - (self.margin_x + x_activity_text)
+        max_width = c.image_width - (c.margin_x + x_activity_text)
         activity_text_truncated = self.truncate_with_ellipsis(
             text=activity_text, max_width=max_width, font=font
         )
@@ -212,6 +129,7 @@ class Renderer(BaseModel):
 
     def render_activities(self, section_title: str, events: list[Activity], y: int) -> int:
         """Renders a section with a title and bullet points starting at the given y-coordinate."""
+        c = self._config
 
         event_title = self._ff.get("light")
         event_regular = self._ff.get("regular")
@@ -219,14 +137,14 @@ class Renderer(BaseModel):
 
         # Title text
         title_width = event_title.width(section_title)
-        title_pos_x = self.image_width // 2
+        title_pos_x = c.image_width // 2
         event_title.write((title_pos_x, y), section_title, colour="gray", anchor="mm")
 
         # Lines either side of title
-        left_line_x_start = self.margin_x
+        left_line_x_start = c.margin_x
         left_line_x_end = title_pos_x - (title_width // 2 + 50)
         right_line_x_start = title_pos_x + (title_width // 2 + 50)
-        right_line_x_end = self.image_width - self.margin_x
+        right_line_x_end = c.image_width - c.margin_x
 
         self._draw.line(
             [left_line_x_start, y, left_line_x_end, y], fill="gray", width=1
@@ -244,29 +162,29 @@ class Renderer(BaseModel):
             # Can show a message if nothing to display
             text_nothing = ""
             event_nothing.write(
-                (self.image_width / 2, y), text_nothing, colour="gray", anchor="ma"
+                (c.image_width / 2, y), text_nothing, colour="gray", anchor="ma"
             )
             y += line_height + 5
             return y
 
         for index, activity in enumerate(events):
             # Stop rendering events if we're past the bottom margin
-            if y > self.image_height - self.margin_y:
+            if y > c.image_height - c.margin_y:
                 remaining = len(events) - index
-                event_regular.write((self.margin_x, y), f"     + {remaining} more...")
+                event_regular.write((c.margin_x, y), f"     + {remaining} more...")
                 break
 
             text = activity.summary
             time = activity.time_start_short
-            bullet = self.bullet_formats[activity.activity_type]
+            bullet = c.bullet_formats[activity.activity_type]
 
-            position = (self.margin_x, y)
+            position = (c.margin_x, y)
             if time is None:
                 self.render_single_activity(
                     position=position,
                     activity_text=text,
                     bullet=bullet,
-                    font=event_regular
+                    font=event_regular,
                 )
             else:
                 self.render_single_activity(
@@ -274,38 +192,40 @@ class Renderer(BaseModel):
                     prefix=time,
                     activity_text=text,
                     bullet=bullet,
-                    font=event_regular
+                    font=event_regular,
                 )
 
-            y += (line_height*self.activity_line_spacing) + 5  # Add spacing between bullet points
+            y += (line_height * c.activity_line_spacing) + 5  # Add spacing between bullet points
 
-        return y + self.space_between_sections
+        return y + c.space_between_sections
 
     def render_date(self, day: str, day_of_week: str, month: str):
+        c = self._config
         date_num = self._ff.get("bold", 200)
         date_rest = self._ff.get("regular")
 
-        date_num.write((self.margin_x, self.top_row_y), day, anchor="ls")
+        date_num.write((c.margin_x, c.top_row_y), day, anchor="ls")
         day_width = date_num.width(day)
 
         date_rest.write(
-            (self.margin_x + day_width + 10, self.top_row_y),
+            (c.margin_x + day_width + 10, c.top_row_y),
             day_of_week,
             colour="gray",
             anchor="ls",
         )
         date_rest.write(
-            (self.margin_x + day_width + 10, self.top_row_y - date_rest.height()),
+            (c.margin_x + day_width + 10, c.top_row_y - date_rest.height()),
             month,
             colour="gray",
             anchor="ls",
         )
 
     def render_last_updated(self, time: str):
+        c = self._config
         text = f"Refreshed {time}"
         f = self._ff.get("regular", 20)
         f.write(
-            (self.image_width // 2, self.image_height - 0.5 * self.margin_y),
+            (c.image_width // 2, c.image_height - 0.5 * c.margin_y),
             text,
             colour="gray",
             anchor="ms",
@@ -317,19 +237,20 @@ class Renderer(BaseModel):
         events_today: list[Activity],
         events_tomorrow: list[Activity],
     ) -> None:
+        c = self._config
         day = todays_date.format("D")
         day_of_week = todays_date.format("ddd")
         month = todays_date.format("MMM")
         time = todays_date.format("HH:mm")
         self.render_date(day, day_of_week, month)
 
-        y0 = self.top_row_y + self.space_between_sections
+        y0 = c.top_row_y + c.space_between_sections
         y1 = self.render_activities("Today", events_today, y0)
         self.render_activities("Tomorrow", events_tomorrow, y1)
 
         self.render_last_updated(time)
 
-        self._image = self._image.rotate(self.rotate_angle, expand=True)
+        self._image = self._image.rotate(c.rotate_angle, expand=True)
 
     def get_png(self) -> bytes:
         with io.BytesIO() as output:

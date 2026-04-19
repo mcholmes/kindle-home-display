@@ -279,9 +279,42 @@ def test_datetime_to_time_invalid_type():
     with pytest.raises(TypeError):
         datetime_to_time("abc")
 
+def test_datetime_to_time_stdlib_datetime():
+    """stdlib datetime (not pendulum) should extract time correctly -- covers line 113."""
+    from datetime import datetime as stdlib_datetime
+    dt = stdlib_datetime(2025, 4, 19, 14, 30)  # noqa: DTZ001
+    result = datetime_to_time(dt)
+    assert result == time(14, 30)
+
 def test_datetime_to_date_invalid_type():
     with pytest.raises(TypeError):
         datetime_to_date("abc")
+
+def test_datetime_to_date_stdlib_datetime():
+    """stdlib datetime (not pendulum) should extract date correctly -- covers line 141."""
+    from datetime import datetime as stdlib_datetime
+    dt = stdlib_datetime(2025, 4, 19, 14, 30)  # noqa: DTZ001
+    result = datetime_to_date(dt)
+    assert result == date(2025, 4, 19)
+
+def test_datetime_to_date_plain_date():
+    """Plain date should be returned as-is."""
+    d = date(2025, 4, 19)
+    result = datetime_to_date(d)
+    assert result == d
+
+def test_from_datetimes_with_description_and_location():
+    """from_datetimes should pass through description and location."""
+    dt = pendulum.datetime(2025, 4, 19, 10, 0, tz="Europe/London")
+    e = Activity.from_datetimes(
+        activity_type="event",
+        summary="Team lunch",
+        datetime_start=dt,
+        description="Bring cake",
+        location="Office kitchen",
+    )
+    assert e.description == "Bring cake"
+    assert e.location == "Office kitchen"
 
 def test_sort_by_time(date_past):
 

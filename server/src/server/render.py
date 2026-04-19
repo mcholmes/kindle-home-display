@@ -73,7 +73,7 @@ class FontFactory:
             current_path = Path(__file__).parent.absolute()
             self.font_dir = current_path / "font"
         else:
-            self.font_dir = font_dir
+            self.font_dir = Path(font_dir)
 
         if font_map is None:
             # Just use the file names as the alias

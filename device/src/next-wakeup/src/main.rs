@@ -32,8 +32,19 @@ fn main() {
 
     let schedule = args.schedule;
 
+    if schedule.split_whitespace().count() < 5 {
+        eprintln!("Error: Invalid cron schedule.");
+        std::process::exit(1);
+    }
+
     let now = Utc::now().with_timezone(&args.timezone);
-    let next = cron_parser::parse(&schedule, &now).expect("Invalid cron schedule");
+    let next = match cron_parser::parse(&schedule, &now) {
+        Ok(t) => t,
+        Err(_) => {
+            eprintln!("Error: Invalid cron schedule.");
+            std::process::exit(1);
+        }
+    };
 
     let diff = next - now;
 
@@ -55,3 +66,30 @@ fn parse_args() -> Result<Args, pico_args::Error> {
 
     Ok(args)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    #[test]
+    fn test_valid_cron_schedule() {
+        let tz: Tz = "Europe/London".parse().unwrap();
+        let now = tz.ymd(2023, 1, 1).and_hms(12, 0, 0);
+        let schedule = "0 * * * *"; // Every hour
+        
+        let next = cron_parser::parse(schedule, &now).unwrap();
+        assert_eq!(next, tz.ymd(2023, 1, 1).and_hms(13, 0, 0));
+    }
+
+    #[test]
+    fn test_invalid_cron_schedule() {
+        let tz: Tz = "UTC".parse().unwrap();
+        let now = tz.ymd(2023, 1, 1).and_hms(12, 0, 0);
+        let schedule = "a b c d e"; // Invalid format but 5 parts
+        
+        let result = cron_parser::parse(schedule, &now);
+        assert!(result.is_err());
+    }
+}
+
